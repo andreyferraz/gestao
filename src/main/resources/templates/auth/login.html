@@ -24,6 +24,7 @@
         <div class="alert success" th:if="${successMessage}" th:text="${successMessage}"></div>
 
         <form id="login-form" method="post" action="/login" novalidate>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <div class="field">
                 <label for="username">Usuário</label>
                 <input id="username" name="username" type="text" autocomplete="username" required>

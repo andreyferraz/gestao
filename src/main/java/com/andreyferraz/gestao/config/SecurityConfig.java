@@ -49,10 +49,11 @@ public class SecurityConfig {
 
 	private UserDetails toUserDetails(Usuario usuario) {
 		String role = usuario.getRole() == null || usuario.getRole().isBlank() ? "USER" : usuario.getRole();
+		boolean disabled = usuario.getAtivo() == null || usuario.getAtivo() != 1;
 		return User.withUsername(usuario.getUsername())
 				.password(usuario.getSenha())
 				.roles(role)
-				.disabled(Boolean.FALSE.equals(usuario.getAtivo()))
+				.disabled(disabled)
 				.build();
 	}
 

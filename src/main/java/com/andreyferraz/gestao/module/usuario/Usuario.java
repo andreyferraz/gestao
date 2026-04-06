@@ -22,7 +22,7 @@ public class Usuario {
 
 	private String senha;
 
-	private Boolean ativo;
+	private Integer ativo;
 
 	private String role;
 }
