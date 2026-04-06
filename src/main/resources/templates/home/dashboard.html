@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Gestao</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="dashboard-page">
+<div class="wrap">
+    <header>
+        <div>
+            <h1>Dashboard</h1>
+            <div class="user" th:text="'Bem-vindo, ' + ${username} + '.'"></div>
+        </div>
+        <a class="logout" href="/logout">Sair</a>
+    </header>
+
+    <section class="grid">
+        <article class="card">
+            <h2>Clientes</h2>
+            <p>Consulte e administre os clientes cadastrados.</p>
+            <a href="/clientes">Abrir API de Clientes</a>
+        </article>
+
+        <article class="card">
+            <h2>Financeiro</h2>
+            <p>Visualize e registre entradas e saidas.</p>
+            <a href="/movimentacoes">Abrir API Financeira</a>
+        </article>
+
+        <article class="card">
+            <h2>Relatorios</h2>
+            <p>Gere relatorio mensal e exporte em PDF no navegador.</p>
+            <a href="/relatorios/mensal/pdf?ano=2026&mes=4">Gerar Relatorio Mensal</a>
+        </article>
+    </section>
+</div>
+</body>
+</html>

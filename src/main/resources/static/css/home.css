@@ -1,0 +1,95 @@
+body.dashboard-page {
+    --bg: #fafaf9;
+    --panel: #ffffff;
+    --text: #292524;
+    --muted: #57534e;
+    --line: #d6d3d1;
+    --accent: #0f766e;
+    --accent-soft: #ccfbf1;
+
+    margin: 0;
+    background: linear-gradient(180deg, #fefce8 0%, var(--bg) 32%);
+    color: var(--text);
+    font-family: "Palatino Linotype", "Book Antiqua", serif;
+    min-height: 100vh;
+}
+
+.dashboard-page .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 24px 16px 36px;
+}
+
+.dashboard-page header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.dashboard-page h1 {
+    margin: 0;
+    font-size: 30px;
+    line-height: 1.1;
+}
+
+.dashboard-page .user {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.dashboard-page .logout {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: white;
+    color: var(--text);
+    text-decoration: none;
+    padding: 8px 12px;
+    font-weight: 600;
+}
+
+.dashboard-page .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.dashboard-page .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.dashboard-page .card h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+}
+
+.dashboard-page .card p {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.dashboard-page .card a {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: #0b3a36;
+    text-decoration: none;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 8px 12px;
+}
+
+@media (max-width: 900px) {
+    .dashboard-page .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-page header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

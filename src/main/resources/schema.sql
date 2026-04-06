@@ -15,3 +15,11 @@ CREATE TABLE IF NOT EXISTS movimentacao (
 	cliente_id TEXT,
 	FOREIGN KEY (cliente_id) REFERENCES cliente(id)
 );
+
+CREATE TABLE IF NOT EXISTS usuarios (
+	id TEXT PRIMARY KEY,
+	username TEXT NOT NULL UNIQUE,
+	senha TEXT NOT NULL,
+	ativo INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1)),
+	role TEXT NOT NULL DEFAULT 'ADMIN'
+);

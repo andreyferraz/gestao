@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Gestao</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="login-page">
+<section class="card">
+    <h1>Entrar</h1>
+    <p class="sub">Acesse sua conta para abrir o dashboard.</p>
+
+    <div class="alert error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+    <div class="alert success" th:if="${successMessage}" th:text="${successMessage}"></div>
+
+    <form method="post" action="/login">
+        <div class="field">
+            <label for="username">Usuario</label>
+            <input id="username" name="username" type="text" required>
+        </div>
+
+        <div class="field">
+            <label for="password">Senha</label>
+            <input id="password" name="password" type="password" required>
+        </div>
+
+        <button type="submit">Acessar Dashboard</button>
+    </form>
+</section>
+</body>
+</html>
