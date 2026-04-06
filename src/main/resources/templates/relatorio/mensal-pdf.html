@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatorio Mensal</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --paper: #ffffff;
+            --ink: #1f2937;
+            --muted: #6b7280;
+            --line: #d1d5db;
+            --entry: #166534;
+            --exit: #991b1b;
+            --accent: #0f766e;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: "Georgia", "Times New Roman", serif;
+            line-height: 1.5;
+        }
+
+        .page {
+            max-width: 1000px;
+            margin: 24px auto;
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 28px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: 0.4px;
+        }
+
+        .subtitle {
+            margin-top: 6px;
+            color: var(--muted);
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 20px 0 24px;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .card h3 {
+            margin: 0;
+            font-size: 12px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .card p {
+            margin: 6px 0 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .entry {
+            color: var(--entry);
+        }
+
+        .exit {
+            color: var(--exit);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid var(--line);
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: var(--muted);
+        }
+
+        td.tipo-ENTRADA {
+            color: var(--entry);
+            font-weight: 700;
+        }
+
+        td.tipo-SAIDA {
+            color: var(--exit);
+            font-weight: 700;
+        }
+
+        .toolbar {
+            max-width: 1000px;
+            margin: 16px auto 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        button {
+            border: 1px solid #0f766e;
+            color: white;
+            background: #0f766e;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .toolbar {
+                display: none;
+            }
+
+            .page {
+                margin: 0;
+                max-width: none;
+                border: 0;
+                border-radius: 0;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="toolbar">
+    <button type="button" onclick="window.print()">Salvar como PDF</button>
+</div>
+
+<main class="page">
+    <header>
+        <h1>Relatorio Mensal Financeiro</h1>
+        <p class="subtitle" th:text="'Competencia: ' + ${relatorio.mes} + '/' + ${relatorio.ano}"></p>
+    </header>
+
+    <section class="summary">
+        <article class="card">
+            <h3>Total de Entradas</h3>
+            <p class="entry" th:text="${#numbers.formatCurrency(relatorio.totalEntradas)}"></p>
+        </article>
+        <article class="card">
+            <h3>Total de Saidas</h3>
+            <p class="exit" th:text="${#numbers.formatCurrency(relatorio.totalSaidas)}"></p>
+        </article>
+        <article class="card">
+            <h3>Saldo do Mes</h3>
+            <p th:text="${#numbers.formatCurrency(relatorio.saldo)}"></p>
+        </article>
+    </section>
+
+    <section>
+        <table>
+            <thead>
+            <tr>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Descricao</th>
+                <th>Cliente</th>
+                <th>Valor</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(relatorio.movimentacoes)}">
+                <td colspan="5">Nenhuma movimentacao encontrada para este mes.</td>
+            </tr>
+            <tr th:each="mov : ${relatorio.movimentacoes}">
+                <td th:text="${mov.dataOcorrencia}"></td>
+                <td th:classappend="'tipo-' + ${mov.tipo}" th:text="${mov.tipo}"></td>
+                <td th:text="${mov.descricao}"></td>
+                <td th:text="${mov.clienteId}"></td>
+                <td th:text="${#numbers.formatCurrency(mov.valor)}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+
+<script>
+    // Autoabre a impressao quando o relatorio eh carregado no navegador.
+    window.addEventListener('load', function () {
+        const search = new URLSearchParams(window.location.search);
+        if (search.get('autoprint') === 'true') {
+            window.print();
+        }
+    });
+</script>
+</body>
+</html>
