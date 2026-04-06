@@ -2,10 +2,8 @@ package com.andreyferraz.gestao.module.cliente;
 
 import java.net.URI;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +13,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import lombok.RequiredArgsConstructor;
@@ -45,30 +42,18 @@ public class ClienteController {
 
 	@GetMapping("/{id}")
 	public ResponseEntity<Cliente> buscarPorId(@PathVariable UUID id) {
-		try {
-			return ResponseEntity.ok(clienteService.buscarPorId(id));
-		} catch (NoSuchElementException ex) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage(), ex);
-		}
+		return ResponseEntity.ok(clienteService.buscarPorId(id));
 	}
 
 	@PutMapping("/{id}")
 	public ResponseEntity<Cliente> atualizar(@PathVariable UUID id, @RequestBody Cliente cliente) {
-		try {
-			return ResponseEntity.ok(clienteService.atualizar(id, cliente));
-		} catch (NoSuchElementException ex) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage(), ex);
-		}
+		return ResponseEntity.ok(clienteService.atualizar(id, cliente));
 	}
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> remover(@PathVariable UUID id) {
-		try {
-			clienteService.remover(id);
-			return ResponseEntity.noContent().build();
-		} catch (NoSuchElementException ex) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage(), ex);
-		}
+		clienteService.remover(id);
+		return ResponseEntity.noContent().build();
 	}
 
 }

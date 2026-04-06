@@ -5,3 +5,13 @@ CREATE TABLE IF NOT EXISTS cliente (
 	data_vencimento_dominio DATE,
 	ativo INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1))
 );
+
+CREATE TABLE IF NOT EXISTS movimentacao (
+	id TEXT PRIMARY KEY,
+	tipo TEXT NOT NULL CHECK (tipo IN ('ENTRADA', 'SAIDA')),
+	valor NUMERIC NOT NULL,
+	data_ocorrencia DATE NOT NULL,
+	descricao TEXT,
+	cliente_id TEXT,
+	FOREIGN KEY (cliente_id) REFERENCES cliente(id)
+);
