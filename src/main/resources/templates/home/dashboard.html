@@ -3,38 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Gestao</title>
-    <link rel="stylesheet" href="/css/app.css">
+    <title>Dashboard | Gestão</title>
+    <link rel="stylesheet" href="/css/app.css" th:href="@{/css/app.css}">
 </head>
 <body class="dashboard-page">
-<div class="wrap">
-    <header>
-        <div>
-            <h1>Dashboard</h1>
-            <div class="user" th:text="'Bem-vindo, ' + ${username} + '.'"></div>
+<div class="dashboard-shell">
+    <aside class="sidebar">
+        <div class="brand-block">
+            <p class="eyebrow">GESTÃO</p>
+            <h1>Painel</h1>
+            <p class="user" th:text="'Bem-vindo, ' + ${username} + '.'"></p>
         </div>
+
+        <nav class="side-nav" aria-label="Abas do painel">
+            <button type="button" class="nav-tab active" data-tab-target="tab-clientes">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+                <span>Clientes</span>
+            </button>
+            <button type="button" class="nav-tab" data-tab-target="tab-detalhes">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v10l-8 4-8-4V7l8-4z"/><path d="M9 12h6M9 16h6"/></svg>
+                <span>Detalhes e Recibo</span>
+            </button>
+            <button type="button" class="nav-tab" data-tab-target="tab-cadastro">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                <span>Novo Cliente</span>
+            </button>
+            <button type="button" class="nav-tab" data-tab-target="tab-relatorios">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h5"/></svg>
+                <span>Relatórios</span>
+            </button>
+            <button type="button" class="nav-tab" data-tab-target="tab-leads">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
+                <span>Leads</span>
+            </button>
+        </nav>
+
         <a class="logout" href="/logout">Sair</a>
-    </header>
+    </aside>
 
-    <section class="grid">
-        <article class="card">
-            <h2>Clientes</h2>
-            <p>Consulte e administre os clientes cadastrados.</p>
-            <a href="/clientes">Abrir API de Clientes</a>
-        </article>
+    <main class="main-content">
+        <section class="kpi-row" aria-label="Resumo financeiro mensal">
+            <article class="kpi">
+                <h2>Total de Clientes</h2>
+                <p id="kpi-clientes">0</p>
+            </article>
+            <article class="kpi">
+                <h2>Receita Mensal Total</h2>
+                <p id="kpi-receita">R$ 0,00</p>
+            </article>
+            <article class="kpi">
+                <h2>Dominios Ativos</h2>
+                <p id="kpi-dominios">0</p>
+            </article>
+        </section>
 
-        <article class="card">
-            <h2>Financeiro</h2>
-            <p>Visualize e registre entradas e saidas.</p>
-            <a href="/movimentacoes">Abrir API Financeira</a>
-        </article>
+        <section class="tab-panels">
+            <article id="tab-clientes" class="panel tab-panel active">
+                <div class="panel-head">
+                    <h3>Clientes</h3>
+                    <span class="chip">Estático</span>
+                </div>
+                <p class="panel-sub">Lista inicial com valor mensal por cliente.</p>
+                <ul id="clientes-lista" class="clientes-lista"></ul>
+            </article>
 
-        <article class="card">
-            <h2>Relatorios</h2>
-            <p>Gere relatorio mensal e exporte em PDF no navegador.</p>
-            <a href="/relatorios/mensal/pdf?ano=2026&mes=4">Gerar Relatorio Mensal</a>
-        </article>
-    </section>
+            <article id="tab-detalhes" class="panel tab-panel">
+                <div class="panel-head">
+                    <h3>Detalhes e Recibo</h3>
+                </div>
+                <p class="panel-sub">Clique em um cliente para visualizar detalhes e gerar recibo.</p>
+
+                <div id="cliente-detalhe" class="cliente-detalhe empty">
+                    <p>Selecione um cliente na lista para ver as informacoes.</p>
+                </div>
+
+                <div class="recibo-box">
+                    <div class="recibo-head">
+                        <h4>Recibo de Servico</h4>
+                        <button id="gerar-recibo" type="button" disabled>Gerar recibo</button>
+                    </div>
+                    <div id="recibo-preview" class="recibo-preview">
+                        <p>O recibo sera preenchido automaticamente com os dados do cliente selecionado.</p>
+                    </div>
+                </div>
+            </article>
+
+            <article id="tab-cadastro" class="panel tab-panel">
+                <div class="panel-head">
+                    <h3>Novo Cliente</h3>
+                </div>
+                <p class="panel-sub">Tela de cadastro inicial (estática).</p>
+
+                <form class="cadastro-form" action="#" method="post" onsubmit="return false;">
+                    <label for="novo-nome">Nome</label>
+                    <input id="novo-nome" type="text" placeholder="Ex.: Empresa Orion" required>
+
+                    <label for="novo-dominio">Dominio de aplicacao</label>
+                    <input id="novo-dominio" type="text" placeholder="orion.com.br" required>
+
+                    <label for="novo-vencimento">Vencimento do dominio</label>
+                    <input id="novo-vencimento" type="date" required>
+
+                    <label for="novo-valor">Valor mensal (R$)</label>
+                    <input id="novo-valor" type="number" min="0" step="0.01" placeholder="250.00" required>
+
+                    <label for="novo-ativo">Ativo</label>
+                    <select id="novo-ativo">
+                        <option value="true" selected>Sim</option>
+                        <option value="false">Nao</option>
+                    </select>
+
+                    <button type="submit">Salvar Cliente</button>
+                </form>
+                <small class="obs">* Nesta etapa, o cadastro esta apenas no front-end estático.</small>
+            </article>
+
+            <article id="tab-relatorios" class="panel tab-panel">
+                <div class="panel-head">
+                    <h3>Relatórios Estáticos</h3>
+                    <span class="chip">Mensal e Anual</span>
+                </div>
+                <p class="panel-sub">Pré-visualização de relatórios no front-end (sem backend).</p>
+
+                <div class="report-mode" role="tablist" aria-label="Modo do relatório">
+                    <button id="modo-mensal" class="mode-btn active" type="button" role="tab">Mensal</button>
+                    <button id="modo-anual" class="mode-btn" type="button" role="tab">Anual</button>
+                </div>
+
+                <div id="filtro-mensal" class="report-filter active">
+                    <label for="relatorio-mes">Mês</label>
+                    <select id="relatorio-mes">
+                        <option value="1">Janeiro</option>
+                        <option value="2">Fevereiro</option>
+                        <option value="3">Março</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Maio</option>
+                        <option value="6">Junho</option>
+                        <option value="7">Julho</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Setembro</option>
+                        <option value="10">Outubro</option>
+                        <option value="11">Novembro</option>
+                        <option value="12">Dezembro</option>
+                    </select>
+
+                    <label for="relatorio-ano-mensal">Ano</label>
+                    <input id="relatorio-ano-mensal" type="number" min="2000" max="2100" step="1" value="2026">
+
+                    <button id="gerar-relatorio-mensal" type="button">Gerar relatório mensal</button>
+                </div>
+
+                <div id="filtro-anual" class="report-filter">
+                    <label for="relatorio-ano-anual">Ano</label>
+                    <input id="relatorio-ano-anual" type="number" min="2000" max="2100" step="1" value="2026">
+
+                    <button id="gerar-relatorio-anual" type="button">Gerar relatório anual</button>
+                </div>
+
+                <div id="report-preview" class="report-preview">
+                    <p>Selecione um modo e gere o relatório para visualizar o resumo estático.</p>
+                </div>
+            </article>
+
+            <article id="tab-leads" class="panel tab-panel">
+                <div class="panel-head">
+                    <h3>Leads</h3>
+                    <span class="chip">Pré-venda</span>
+                </div>
+                <p class="panel-sub">Cadastro estático de potenciais clientes para acompanhamento comercial.</p>
+
+                <form id="lead-form" class="lead-form" action="#" method="post" onsubmit="return false;">
+                    <label for="lead-nome">Nome</label>
+                    <input id="lead-nome" type="text" placeholder="Ex.: Maria Souza" required>
+
+                    <label for="lead-telefone">Telefone</label>
+                    <input id="lead-telefone" type="tel" placeholder="(11) 91234-5678" required>
+
+                    <label for="lead-orcamento-dev">Orçamento para Desenvolvimento (R$)</label>
+                    <input id="lead-orcamento-dev" type="number" min="0" step="0.01" placeholder="3500.00" required>
+
+                    <label for="lead-orcamento-manutencao">Orçamento para Manutenção/Hospedagem (R$)</label>
+                    <input id="lead-orcamento-manutencao" type="number" min="0" step="0.01" placeholder="450.00" required>
+
+                    <label for="lead-observacoes">Observações</label>
+                    <textarea id="lead-observacoes" rows="4" placeholder="Necessita e-commerce com integração de pagamento."></textarea>
+
+                    <button id="lead-salvar" type="submit">Salvar Lead</button>
+                </form>
+
+                <ul id="leads-lista" class="leads-lista" aria-label="Lista de leads cadastrados"></ul>
+                <small class="obs">* Leads salvos apenas no front-end estático nesta etapa.</small>
+            </article>
+        </section>
+    </main>
 </div>
+<script defer src="/js/dashboard.js?v=2" th:src="@{/js/dashboard.js(v=2)}"></script>
 </body>
 </html>
