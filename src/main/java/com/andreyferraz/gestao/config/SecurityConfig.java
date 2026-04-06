@@ -33,7 +33,8 @@ public class SecurityConfig {
 	SecurityFilterChain securityFilterChain(HttpSecurity http) {
 		http
 				.authorizeHttpRequests(auth -> auth
-						.requestMatchers("/login", "/error").permitAll()
+						.requestMatchers("/login", "/error", "/css/**", "/js/**", "/images/**", "/favicon.ico")
+						.permitAll()
 						.anyRequest().authenticated())
 				.formLogin(form -> form
 						.loginPage("/login")

@@ -3,30 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Gestao</title>
-    <link rel="stylesheet" href="/css/app.css">
+    <title>Login | Gestão</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body class="login-page">
-<section class="card">
-    <h1>Entrar</h1>
-    <p class="sub">Acesse sua conta para abrir o dashboard.</p>
+<div class="login-shell">
+    <section class="login-branding" aria-hidden="true">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <p class="eyebrow">GESTÃO</p>
+        <h2>Organize clientes, financeiro e relatórios em um unico painel.</h2>
+        <p class="brand-copy">Login seguro com Spring Security e dados em SQLite.</p>
+    </section>
 
-    <div class="alert error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
-    <div class="alert success" th:if="${successMessage}" th:text="${successMessage}"></div>
+    <section class="card">
+        <h1>Entrar</h1>
+        <p class="sub">Use seu usuário para acessar o dashboard.</p>
 
-    <form method="post" action="/login">
-        <div class="field">
-            <label for="username">Usuario</label>
-            <input id="username" name="username" type="text" required>
-        </div>
+        <div class="alert error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+        <div class="alert success" th:if="${successMessage}" th:text="${successMessage}"></div>
 
-        <div class="field">
-            <label for="password">Senha</label>
-            <input id="password" name="password" type="password" required>
-        </div>
+        <form id="login-form" method="post" action="/login" novalidate>
+            <div class="field">
+                <label for="username">Usuário</label>
+                <input id="username" name="username" type="text" autocomplete="username" required>
+                <small class="hint">Informe seu nome de usuário.</small>
+            </div>
 
-        <button type="submit">Acessar Dashboard</button>
-    </form>
-</section>
+            <div class="field">
+                <label for="password">Senha</label>
+                <div class="password-wrap">
+                    <input id="password" name="password" type="password" autocomplete="current-password" required>
+                    <button class="toggle-password" type="button" aria-label="Mostrar senha" hidden>
+                        <svg class="icon-show" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M2 12s3.8-6 10-6 10 6 10 6-3.8 6-10 6-10-6-10-6z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <svg class="icon-hide" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M3 3l18 18"/>
+                            <path d="M10.6 6.3c.5-.2.9-.3 1.4-.3 6.2 0 10 6 10 6-.8 1.2-1.7 2.2-2.8 3.1"/>
+                            <path d="M14.9 14.9a3 3 0 0 1-4.2-4.2"/>
+                            <path d="M7.1 7.1C4.2 8.7 2 12 2 12s3.8 6 10 6c1.3 0 2.5-.2 3.6-.6"/>
+                        </svg>
+                    </button>
+                </div>
+                <small id="caps-lock-warning" class="hint warning" hidden>Caps Lock ativado.</small>
+            </div>
+
+            <button id="submit-login" type="submit">Acessar Dashboard</button>
+        </form>
+    </section>
+</div>
+<script src="/js/login.js" th:src="@{/js/login.js}"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
-* {
-    box-sizing: border-box;
-}
-
 @import url("/css/auth.css");
 @import url("/css/home.css");
 @import url("/css/relatorio.css");
+
+* {
+    box-sizing: border-box;
+}
