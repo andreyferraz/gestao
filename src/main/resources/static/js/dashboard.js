@@ -374,41 +374,79 @@ window.addEventListener("DOMContentLoaded", function () {
         elementos.filtroAnual.classList.toggle("active", !mensal);
     };
 
-    const gerarRelatorioMensal = function () {
+    const gerarRelatorioMensal = async function () {
         if (!elementos.reportPreview || !elementos.mesInput || !elementos.anoMensalInput) {
             return;
         }
 
         const mesNumero = Number(elementos.mesInput.value);
         const ano = Number(elementos.anoMensalInput.value) || new Date().getFullYear();
-        const nomeMes = nomesMeses[Math.max(0, Math.min(11, mesNumero - 1))];
-        const receitaMensal = obterReceitaMensal();
 
-        const itensClientes = clientes.map(function (cliente) {
-            return "<li><strong>" + cliente.nome + "</strong>: " + formatarMoeda(cliente.valorMensal) + "</li>";
-        }).join("");
+        if (!Number.isInteger(mesNumero) || mesNumero < 1 || mesNumero > 12) {
+            throw new Error("Mes invalido para relatorio mensal.");
+        }
+
+        const relatorio = await buscarJson(
+            "/relatorios/mensal?ano=" + encodeURIComponent(ano) + "&mes=" + encodeURIComponent(mesNumero)
+        );
+
+        const nomeMes = nomesMeses[Math.max(0, Math.min(11, (Number(relatorio.mes) || mesNumero) - 1))];
+        const totalEntradas = Number(relatorio.totalEntradas) || 0;
+        const totalSaidas = Number(relatorio.totalSaidas) || 0;
+        const saldo = Number(relatorio.saldo) || 0;
+        const movimentacoes = Array.isArray(relatorio.movimentacoes) ? relatorio.movimentacoes : [];
+
+        const itensMovimentacoes = movimentacoes.length === 0
+            ? "<li>Nenhuma movimentacao encontrada para este periodo.</li>"
+            : movimentacoes.map(function (mov) {
+                return "<li>"
+                    + "<strong>" + formatarData(mov.dataOcorrencia) + "</strong> - "
+                    + (mov.tipo || "N/A") + " - "
+                    + formatarMoeda(mov.valor)
+                    + (mov.descricao ? " - " + mov.descricao : "")
+                    + "</li>";
+            }).join("");
 
         elementos.reportPreview.innerHTML = ""
-            + "<p><strong>Relatorio Mensal - " + nomeMes + "/" + ano + "</strong></p>"
-            + "<p>Total previsto de receita: <strong>" + formatarMoeda(receitaMensal) + "</strong></p>"
-            + "<p>Base de clientes ativos no painel estático:</p>"
-            + "<ul>" + itensClientes + "</ul>";
+            + "<p><strong>Relatorio Mensal - " + nomeMes + "/" + (Number(relatorio.ano) || ano) + "</strong></p>"
+            + "<p>Total de entradas: <strong>" + formatarMoeda(totalEntradas) + "</strong></p>"
+            + "<p>Total de saidas: <strong>" + formatarMoeda(totalSaidas) + "</strong></p>"
+            + "<p>Saldo do mes: <strong>" + formatarMoeda(saldo) + "</strong></p>"
+            + "<p>Movimentacoes:</p>"
+            + "<ul>" + itensMovimentacoes + "</ul>";
     };
 
-    const gerarRelatorioAnual = function () {
+    const gerarRelatorioAnual = async function () {
         if (!elementos.reportPreview || !elementos.anoAnualInput) {
             return;
         }
 
         const ano = Number(elementos.anoAnualInput.value) || new Date().getFullYear();
-        const receitaMensal = obterReceitaMensal();
-        const receitaAnual = receitaMensal * 12;
+
+        const relatorio = await buscarJson("/relatorios/anual?ano=" + encodeURIComponent(ano));
+        const totalEntradas = Number(relatorio.totalEntradas) || 0;
+        const totalSaidas = Number(relatorio.totalSaidas) || 0;
+        const saldo = Number(relatorio.saldo) || 0;
+        const totalMovimentacoes = Number(relatorio.quantidadeMovimentacoes) || 0;
+        const resumoMensal = Array.isArray(relatorio.resumoMensal) ? relatorio.resumoMensal : [];
+
+        const itensResumo = resumoMensal.map(function (item) {
+            const mes = Number(item.mes) || 0;
+            const nomeMes = nomesMeses[Math.max(0, Math.min(11, mes - 1))] || "Mes " + mes;
+            const saldoMes = Number(item.saldo) || 0;
+            const quantidade = Number(item.quantidadeMovimentacoes) || 0;
+            return "<li><strong>" + nomeMes + "</strong>: saldo " + formatarMoeda(saldoMes)
+                + " (" + quantidade + " " + (quantidade === 1 ? "movimentacao" : "movimentacoes") + ")</li>";
+        }).join("");
 
         elementos.reportPreview.innerHTML = ""
-            + "<p><strong>Relatorio Anual - " + ano + "</strong></p>"
-            + "<p>Receita mensal base: <strong>" + formatarMoeda(receitaMensal) + "</strong></p>"
-            + "<p>Receita anual estimada: <strong>" + formatarMoeda(receitaAnual) + "</strong></p>"
-            + "<p>Observacao: esta tela esta em modo estatico e sera integrada ao backend na proxima etapa.</p>";
+            + "<p><strong>Relatorio Anual - " + (Number(relatorio.ano) || ano) + "</strong></p>"
+            + "<p>Total de entradas: <strong>" + formatarMoeda(totalEntradas) + "</strong></p>"
+            + "<p>Total de saidas: <strong>" + formatarMoeda(totalSaidas) + "</strong></p>"
+            + "<p>Saldo anual: <strong>" + formatarMoeda(saldo) + "</strong></p>"
+            + "<p>Total de movimentacoes no ano: <strong>" + totalMovimentacoes + "</strong></p>"
+            + "<p>Resumo por mes:</p>"
+            + "<ul>" + itensResumo + "</ul>";
     };
 
     const selecionarCliente = async function (clienteId) {
@@ -696,11 +734,23 @@ window.addEventListener("DOMContentLoaded", function () {
     }
 
     if (elementos.gerarMensalBtn) {
-        elementos.gerarMensalBtn.addEventListener("click", gerarRelatorioMensal);
+        elementos.gerarMensalBtn.addEventListener("click", async function () {
+            try {
+                await gerarRelatorioMensal();
+            } catch (error) {
+                elementos.reportPreview.innerHTML = "<p>Nao foi possivel gerar o relatorio mensal agora.</p>";
+            }
+        });
     }
 
     if (elementos.gerarAnualBtn) {
-        elementos.gerarAnualBtn.addEventListener("click", gerarRelatorioAnual);
+        elementos.gerarAnualBtn.addEventListener("click", async function () {
+            try {
+                await gerarRelatorioAnual();
+            } catch (error) {
+                elementos.reportPreview.innerHTML = "<p>Nao foi possivel gerar o relatorio anual agora.</p>";
+            }
+        });
     }
 
     if (elementos.leadForm) {
@@ -736,7 +786,11 @@ window.addEventListener("DOMContentLoaded", function () {
         atualizarModoCadastro();
         ativarAba("tab-clientes");
         definirModoRelatorio("mensal");
-        gerarRelatorioMensal();
+        try {
+            await gerarRelatorioMensal();
+        } catch (error) {
+            elementos.reportPreview.innerHTML = "<p>Nao foi possivel carregar o relatorio mensal inicial.</p>";
+        }
         renderLeads();
     };
 

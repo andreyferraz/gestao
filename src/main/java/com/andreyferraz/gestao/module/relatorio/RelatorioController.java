@@ -25,6 +25,12 @@ public class RelatorioController {
 		return ResponseEntity.ok(relatorioService.gerarRelatorioMensal(ano, mes));
 	}
 
+	@GetMapping("/anual")
+	@ResponseBody
+	public ResponseEntity<RelatorioAnualDto> obterRelatorioAnual(@RequestParam int ano) {
+		return ResponseEntity.ok(relatorioService.gerarRelatorioAnual(ano));
+	}
+
 	@GetMapping("/mensal/pdf")
 	public String gerarRelatorioMensalPdf(
 			@RequestParam int ano,
