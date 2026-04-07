@@ -1,6 +1,6 @@
-@import url("/css/auth.css");
-@import url("/css/home.css");
-@import url("/css/relatorio.css");
+@import url("auth.css");
+@import url("home.css");
+@import url("relatorio.css");
 
 * {
     box-sizing: border-box;
