@@ -57,6 +57,7 @@ window.addEventListener("DOMContentLoaded", function () {
         , chamadoSalvarButton: document.getElementById("chamado-salvar")
         , chamadosLista: document.getElementById("chamados-lista")
         , chamadoFeedback: document.getElementById("chamado-feedback")
+        , chamadosAbertosContador: document.getElementById("chamados-abertos-contador")
         , chamadoEditarModal: document.getElementById("chamado-editar-modal")
         , chamadoEditarDialog: document.getElementById("chamado-editar-dialog")
         , chamadoEditarTextoInput: document.getElementById("chamado-editar-texto")
@@ -241,6 +242,19 @@ window.addEventListener("DOMContentLoaded", function () {
 
         elementos.chamadoFeedback.textContent = mensagem;
         elementos.chamadoFeedback.style.color = erro ? "#b91c1c" : "#0f766e";
+    };
+
+    const atualizarContadorChamadosAbertos = function () {
+        if (!elementos.chamadosAbertosContador) {
+            return;
+        }
+
+        const totalAbertos = chamados.filter(function (chamado) {
+            return chamado.status === "ABERTO";
+        }).length;
+
+        elementos.chamadosAbertosContador.textContent = String(totalAbertos);
+        elementos.chamadosAbertosContador.style.display = totalAbertos > 0 ? "inline-flex" : "none";
     };
 
     const abrirModalEdicaoChamado = function (chamado) {
@@ -748,6 +762,7 @@ window.addEventListener("DOMContentLoaded", function () {
         const data = await buscarJson("/chamados");
         const lista = Array.isArray(data) ? data : [];
         chamados.splice(0, chamados.length, ...lista.map(normalizarChamado));
+        atualizarContadorChamadosAbertos();
     };
 
     const renderChamados = function () {
@@ -841,6 +856,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
         await carregarChamadosBackend();
         renderChamados();
+        atualizarContadorChamadosAbertos();
         setChamadoFeedback("Chamado aberto com sucesso.", false);
 
         if (elementos.chamadoForm) {
@@ -873,6 +889,7 @@ window.addEventListener("DOMContentLoaded", function () {
         }
 
         renderChamados();
+        atualizarContadorChamadosAbertos();
         setChamadoFeedback("Status do chamado atualizado com sucesso.", false);
     };
 
@@ -914,6 +931,7 @@ window.addEventListener("DOMContentLoaded", function () {
         }
 
         renderChamados();
+        atualizarContadorChamadosAbertos();
         setChamadoFeedback("Texto do chamado atualizado com sucesso.", false);
         fecharModalEdicaoChamado();
     };
@@ -1334,6 +1352,7 @@ window.addEventListener("DOMContentLoaded", function () {
         renderDetalheLead(null);
         atualizarModoCadastro();
         atualizarModoLead();
+        atualizarContadorChamadosAbertos();
         ativarAba(obterAbaInicial());
         definirModoRelatorio("mensal");
         try {

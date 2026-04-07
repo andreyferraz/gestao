@@ -109,6 +109,21 @@ body.dashboard-page {
     color: #f0fdfa;
 }
 
+.dashboard-page .nav-counter {
+    margin-left: auto;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+}
+
 .dashboard-page .logout {
     display: inline-flex;
     align-items: center;
