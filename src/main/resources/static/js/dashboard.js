@@ -17,6 +17,7 @@ window.addEventListener("DOMContentLoaded", function () {
         editarClienteButton: document.getElementById("editar-cliente"),
         excluirClienteButton: document.getElementById("excluir-cliente"),
         reciboButton: document.getElementById("gerar-recibo"),
+        compartilharReciboWhatsappButton: document.getElementById("compartilhar-recibo-whatsapp"),
         reciboPreview: document.getElementById("recibo-preview"),
         modoMensalBtn: document.getElementById("modo-mensal"),
         modoAnualBtn: document.getElementById("modo-anual"),
@@ -497,6 +498,9 @@ window.addEventListener("DOMContentLoaded", function () {
             elementos.detalhe.classList.add("empty");
             elementos.detalhe.innerHTML = "<p>Selecione um cliente na lista para ver as informacoes.</p>";
             elementos.reciboButton.disabled = true;
+            if (elementos.compartilharReciboWhatsappButton) {
+                elementos.compartilharReciboWhatsappButton.disabled = true;
+            }
             if (elementos.editarClienteButton) {
                 elementos.editarClienteButton.disabled = true;
             }
@@ -518,6 +522,9 @@ window.addEventListener("DOMContentLoaded", function () {
             + "</dl>";
 
         elementos.reciboButton.disabled = false;
+        if (elementos.compartilharReciboWhatsappButton) {
+            elementos.compartilharReciboWhatsappButton.disabled = false;
+        }
         if (elementos.editarClienteButton) {
             elementos.editarClienteButton.disabled = false;
         }
@@ -526,24 +533,68 @@ window.addEventListener("DOMContentLoaded", function () {
         }
     };
 
-    const gerarRecibo = function (cliente) {
-        if (!cliente) {
-            return;
-        }
-
-        const dataAtual = new Intl.DateTimeFormat("pt-BR").format(new Date());
-
+    const renderizarRecibo = function (cliente, valorFinal, dataAtual) {
         elementos.reciboPreview.innerHTML = ""
+            + "<div class=\"recibo-brand\">"
+            + "<p class=\"recibo-brand-name\">Andrêy Ferraz</p>"
+            + "<p class=\"recibo-brand-link\">www.andreyferraz.com.br</p>"
+            + "<p class=\"recibo-brand-tag\">Desenvolvimento de aplicações web e mobile</p>"
+            + "</div>"
             + "<p><strong>RECIBO DE SERVICO</strong></p>"
-            + "<p>Recebemos de <strong>" + cliente.nome + "</strong> o valor de <strong>" + formatarMoeda(cliente.valorMensal)
+            + "<p>Recebemos de <strong>" + cliente.nome + "</strong> o valor de <strong>" + formatarMoeda(valorFinal)
             + "</strong>, referente a servicos de <strong>manutencao e hospedagem</strong>.</p>"
             + "<p>Data de emissao: <strong>" + dataAtual + "</strong></p>"
             + "<p>Dominio vinculado: <strong>" + cliente.dominioAplicacao + "</strong></p>";
     };
 
-    const gerarReciboComMovimentacoes = async function (cliente) {
-        if (!cliente || !cliente.id) {
+    const abrirReciboEmPdf = function (cliente, valorFinal, dataAtual) {
+        const janela = window.open("", "_blank", "noopener,noreferrer");
+        if (!janela) {
             return;
+        }
+
+        const htmlRecibo = "<!doctype html>"
+            + "<html lang=\"pt-BR\"><head><meta charset=\"utf-8\">"
+            + "<title>Recibo - " + (cliente.nome || "Cliente") + "</title>"
+            + "<style>"
+            + "body{font-family:Arial,sans-serif;margin:24px;color:#0f172a;}"
+            + ".wrap{max-width:760px;margin:0 auto;border:1px solid #cbd5e1;border-radius:12px;padding:24px;background:#fff;}"
+            + ".brand{border-bottom:2px solid #0f766e;padding-bottom:12px;margin-bottom:18px;}"
+            + ".brand h1{margin:0;font-size:32px;color:#0f172a;letter-spacing:.4px;}"
+            + ".brand p{margin:4px 0 0;color:#334155;}"
+            + ".title{font-size:18px;font-weight:700;margin:0 0 12px;}"
+            + "p{line-height:1.55;margin:8px 0;}"
+            + "@media print{body{margin:0}.wrap{border:none;padding:0}}"
+            + "</style></head><body>"
+            + "<main class=\"wrap\">"
+            + "<header class=\"brand\">"
+            + "<h1>Andrêy Ferraz</h1>"
+            + "<p>www.andreyferraz.com.br</p>"
+            + "<p>Desenvolvimento de aplicações web e mobile</p>"
+            + "</header>"
+            + "<p class=\"title\">RECIBO DE SERVICO</p>"
+            + "<p>Recebemos de <strong>" + cliente.nome + "</strong> o valor de <strong>" + formatarMoeda(valorFinal)
+            + "</strong>, referente a servicos de <strong>manutencao e hospedagem</strong>.</p>"
+            + "<p>Data de emissao: <strong>" + dataAtual + "</strong></p>"
+            + "<p>Dominio vinculado: <strong>" + cliente.dominioAplicacao + "</strong></p>"
+            + "</main></body></html>";
+
+        janela.document.open();
+        janela.document.write(htmlRecibo);
+        janela.document.close();
+        janela.focus();
+        janela.print();
+    };
+
+    const obterDadosReciboComMovimentacoes = async function (cliente) {
+        const dataAtual = new Intl.DateTimeFormat("pt-BR").format(new Date());
+        const valorPadrao = Number(cliente && cliente.valorMensal) || 0;
+
+        if (!cliente || !cliente.id) {
+            return {
+                dataAtual: dataAtual,
+                valorFinal: valorPadrao
+            };
         }
 
         const movimentacoes = await buscarJson("/movimentacoes?clienteId=" + encodeURIComponent(cliente.id));
@@ -556,17 +607,153 @@ window.addEventListener("DOMContentLoaded", function () {
             return acc + (Number(mov.valor) || 0);
         }, 0);
 
-        const dataAtual = new Intl.DateTimeFormat("pt-BR").format(new Date());
-        const totalLancamentos = entradas.length;
-        const valorFinal = valorRecibo > 0 ? valorRecibo : (Number(cliente.valorMensal) || 0);
+        return {
+            dataAtual: dataAtual,
+            valorFinal: valorRecibo > 0 ? valorRecibo : valorPadrao
+        };
+    };
 
-        elementos.reciboPreview.innerHTML = ""
-            + "<p><strong>RECIBO DE SERVICO</strong></p>"
-            + "<p>Recebemos de <strong>" + cliente.nome + "</strong> o valor de <strong>" + formatarMoeda(valorFinal)
-            + "</strong>, referente a servicos de <strong>manutencao e hospedagem</strong>.</p>"
-            + "<p>Data de emissao: <strong>" + dataAtual + "</strong></p>"
-            + "<p>Dominio vinculado: <strong>" + cliente.dominioAplicacao + "</strong></p>"
-            + "<p>Total de entradas encontradas na API financeira: <strong>" + totalLancamentos + "</strong></p>";
+    const gerarPdfReciboBlob = function (cliente, valorFinal, dataAtual) {
+        const jsPdfNamespace = window.jspdf;
+        if (!jsPdfNamespace || !jsPdfNamespace.jsPDF) {
+            throw new Error("Biblioteca de PDF indisponivel no momento.");
+        }
+
+        const doc = new jsPdfNamespace.jsPDF({
+            orientation: "portrait",
+            unit: "pt",
+            format: "a4"
+        });
+
+        const margemX = 48;
+        let y = 60;
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(28);
+        doc.text("Andrêy Ferraz", margemX, y);
+
+        y += 26;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(12);
+        doc.text("www.andreyferraz.com.br", margemX, y);
+
+        y += 18;
+        doc.text("Desenvolvimento de aplicações web e mobile", margemX, y);
+
+        y += 16;
+        doc.setDrawColor(15, 118, 110);
+        doc.setLineWidth(1.2);
+        doc.line(margemX, y, 545, y);
+
+        y += 32;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        doc.text("RECIBO DE SERVIÇO", margemX, y);
+
+        y += 28;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(12);
+
+        const textoPrincipal = "Recebemos de " + (cliente.nome || "Cliente") + " o valor de "
+            + formatarMoeda(valorFinal)
+            + ", referente a serviços de manutenção e hospedagem.";
+        const linhasPrincipal = doc.splitTextToSize(textoPrincipal, 500);
+        doc.text(linhasPrincipal, margemX, y);
+
+        y += (linhasPrincipal.length * 16) + 12;
+        doc.text("Data de emissão: " + dataAtual, margemX, y);
+
+        y += 22;
+        doc.text("Dominio vinculado: " + (cliente.dominioAplicacao || "Nao informado"), margemX, y);
+
+        return doc.output("blob");
+    };
+
+    const baixarBlobComoArquivo = function (blob, nomeArquivo) {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = nomeArquivo;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.setTimeout(function () {
+            window.URL.revokeObjectURL(url);
+        }, 1000);
+    };
+
+    const normalizarNumeroWhatsapp = function (contato) {
+        const digitos = String(contato || "").replace(/\D+/g, "");
+        if (!digitos) {
+            return "";
+        }
+
+        if (digitos.length === 10 || digitos.length === 11) {
+            return "55" + digitos;
+        }
+
+        if (digitos.length >= 12 && digitos.length <= 15) {
+            if (digitos.startsWith("00") && digitos.length > 2) {
+                return digitos.substring(2);
+            }
+            return digitos;
+        }
+
+        return "";
+    };
+
+    const compartilharReciboWhatsapp = async function (cliente) {
+        if (!cliente) {
+            return;
+        }
+
+        const dadosRecibo = await obterDadosReciboComMovimentacoes(cliente);
+        renderizarRecibo(cliente, dadosRecibo.valorFinal, dadosRecibo.dataAtual);
+
+        const blobPdf = gerarPdfReciboBlob(cliente, dadosRecibo.valorFinal, dadosRecibo.dataAtual);
+        const nomeArquivo = "recibo-" + String(cliente.nome || "cliente").toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".pdf";
+        const mensagem = "Olá, segue o recibo referente aos serviços de manutenção e hospedagem.";
+        const numeroWhatsapp = normalizarNumeroWhatsapp(cliente.contato);
+
+        if (navigator.share && navigator.canShare) {
+            const arquivoPdf = new File([blobPdf], nomeArquivo, { type: "application/pdf" });
+            if (navigator.canShare({ files: [arquivoPdf] })) {
+                await navigator.share({
+                    title: "Recibo de Serviço",
+                    text: mensagem,
+                    files: [arquivoPdf]
+                });
+                return;
+            }
+        }
+
+        baixarBlobComoArquivo(blobPdf, nomeArquivo);
+        const destinoWhatsapp = numeroWhatsapp ? "/" + numeroWhatsapp : "";
+        const linkWhatsapp = "https://wa.me" + destinoWhatsapp + "?text="
+            + encodeURIComponent(mensagem + " O recibo foi baixado para anexo.");
+        window.open(linkWhatsapp, "_blank", "noopener,noreferrer");
+    };
+
+    const gerarRecibo = function (cliente) {
+        if (!cliente) {
+            return;
+        }
+
+        const dataAtual = new Intl.DateTimeFormat("pt-BR").format(new Date());
+        const valorFinal = Number(cliente.valorMensal) || 0;
+
+        renderizarRecibo(cliente, valorFinal, dataAtual);
+        abrirReciboEmPdf(cliente, valorFinal, dataAtual);
+    };
+
+    const gerarReciboComMovimentacoes = async function (cliente) {
+        if (!cliente) {
+            return;
+        }
+
+        const dadosRecibo = await obterDadosReciboComMovimentacoes(cliente);
+        renderizarRecibo(cliente, dadosRecibo.valorFinal, dadosRecibo.dataAtual);
+        abrirReciboEmPdf(cliente, dadosRecibo.valorFinal, dadosRecibo.dataAtual);
     };
 
     const definirModoRelatorio = function (modo) {
@@ -681,7 +868,7 @@ window.addEventListener("DOMContentLoaded", function () {
         } catch (error) {
             clienteSelecionado = null;
             renderDetalhe(null);
-            elementos.reciboPreview.innerHTML = "<p>Nao foi possivel carregar os detalhes do cliente selecionado.</p>";
+            elementos.reciboPreview.innerHTML = "<p>Não foi possível carregar os detalhes do cliente selecionado.</p>";
         }
     };
 
@@ -1173,6 +1360,28 @@ window.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    if (elementos.compartilharReciboWhatsappButton) {
+        elementos.compartilharReciboWhatsappButton.addEventListener("click", async function () {
+            if (!clienteSelecionado) {
+                return;
+            }
+
+            try {
+                await compartilharReciboWhatsapp(clienteSelecionado);
+                setDetalheFeedback("Compartilhamento iniciado no WhatsApp.", false);
+            } catch (error) {
+                if (error && error.name === "AbortError") {
+                    return;
+                }
+
+                const mensagemErro = error instanceof Error && error.message
+                    ? error.message
+                    : "Não foi possível compartilhar o recibo no WhatsApp.";
+                setDetalheFeedback(mensagemErro, true);
+            }
+        });
+    }
+
     if (elementos.excluirClienteButton) {
         elementos.excluirClienteButton.addEventListener("click", async function () {
             try {
@@ -1180,7 +1389,7 @@ window.addEventListener("DOMContentLoaded", function () {
             } catch (error) {
                 const mensagem = error instanceof Error && error.message
                     ? error.message
-                    : "Nao foi possivel excluir cliente agora.";
+                    : "Não foi possível excluir cliente agora.";
                 setDetalheFeedback(mensagem, true);
             }
         });

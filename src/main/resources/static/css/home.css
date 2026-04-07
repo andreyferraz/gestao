@@ -361,6 +361,13 @@ body.dashboard-page {
     font-size: 15px;
 }
 
+.dashboard-page .recibo-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
 .dashboard-page .recibo-head button,
 .dashboard-page .cadastro-form button {
     border: 0;
@@ -378,6 +385,10 @@ body.dashboard-page {
     cursor: not-allowed;
 }
 
+.dashboard-page #compartilhar-recibo-whatsapp {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+}
+
 .dashboard-page .recibo-preview {
     padding: 12px;
     font-size: 14px;
@@ -387,6 +398,28 @@ body.dashboard-page {
 
 .dashboard-page .recibo-preview p {
     margin: 0;
+}
+
+.dashboard-page .recibo-preview p + p {
+    margin-top: 8px;
+}
+
+.dashboard-page .recibo-brand {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.dashboard-page .recibo-preview .recibo-brand-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: 0.3px;
+}
+
+.dashboard-page .recibo-preview .recibo-brand-link,
+.dashboard-page .recibo-preview .recibo-brand-tag {
+    color: #334155;
 }
 
 .dashboard-page .detalhe-actions {
