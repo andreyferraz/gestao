@@ -38,6 +38,10 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
                 <span>Leads</span>
             </button>
+            <button type="button" class="nav-tab" data-tab-target="tab-chamados">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="M8 10h8M8 14h5"/></svg>
+                <span>Chamados</span>
+            </button>
         </nav>
 
         <a class="logout" href="/logout">Sair</a>
@@ -220,9 +224,32 @@
 
                 <small id="lead-feedback" class="obs">* Carregando leads do backend.</small>
             </article>
+
+            <article id="tab-chamados" class="panel tab-panel">
+                <div class="panel-head">
+                    <h3>Chamados</h3>
+                    <span class="chip">Suporte</span>
+                </div>
+                <p class="panel-sub">Abra chamados vinculando a um cliente e acompanhe o status.</p>
+
+                <form id="chamado-form" class="chamado-form" action="#" method="post" onsubmit="return false;">
+                    <label for="chamado-cliente">Cliente</label>
+                    <select id="chamado-cliente" required>
+                        <option value="">Selecione um cliente</option>
+                    </select>
+
+                    <label for="chamado-descricao">Problema</label>
+                    <textarea id="chamado-descricao" rows="5" placeholder="Descreva o problema do cliente..." required></textarea>
+
+                    <button id="chamado-salvar" type="submit">Abrir Chamado</button>
+                </form>
+
+                <ul id="chamados-lista" class="chamados-lista" aria-label="Lista de chamados"></ul>
+                <small id="chamado-feedback" class="obs">* Carregando chamados do backend.</small>
+            </article>
         </section>
     </main>
 </div>
-<script defer src="/js/dashboard.js?v=12" th:src="@{/js/dashboard.js(v=12)}"></script>
+<script defer src="/js/dashboard.js?v=13" th:src="@{/js/dashboard.js(v=13)}"></script>
 </body>
 </html>

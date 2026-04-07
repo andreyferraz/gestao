@@ -34,3 +34,11 @@ CREATE TABLE IF NOT EXISTS lead (
 	orcamento_manutencao_hospedagem NUMERIC NOT NULL DEFAULT 0,
 	observacoes TEXT
 );
+
+CREATE TABLE IF NOT EXISTS chamado (
+	id TEXT PRIMARY KEY,
+	cliente_id TEXT NOT NULL,
+	descricao_problema TEXT NOT NULL,
+	status TEXT NOT NULL CHECK (status IN ('ABERTO', 'RESOLVIDO')),
+	FOREIGN KEY (cliente_id) REFERENCES cliente(id)
+);

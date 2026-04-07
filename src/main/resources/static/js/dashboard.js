@@ -1,6 +1,7 @@
 window.addEventListener("DOMContentLoaded", function () {
     const clientes = [];
     const leads = [];
+    const chamados = [];
     const CHAVE_ABA_ATIVA = "gestao.dashboard.abaAtiva";
 
     const elementos = {
@@ -50,6 +51,12 @@ window.addEventListener("DOMContentLoaded", function () {
         leadDetalhe: document.getElementById("lead-detalhe"),
         leadEditarButton: document.getElementById("lead-editar"),
         leadExcluirButton: document.getElementById("lead-excluir")
+        , chamadoForm: document.getElementById("chamado-form")
+        , chamadoClienteSelect: document.getElementById("chamado-cliente")
+        , chamadoDescricaoInput: document.getElementById("chamado-descricao")
+        , chamadoSalvarButton: document.getElementById("chamado-salvar")
+        , chamadosLista: document.getElementById("chamados-lista")
+        , chamadoFeedback: document.getElementById("chamado-feedback")
     };
 
     if (!elementos.lista || !elementos.detalhe || !elementos.reciboButton || !elementos.reciboPreview) {
@@ -201,6 +208,52 @@ window.addEventListener("DOMContentLoaded", function () {
             orcamentoDesenvolvimento: Number(lead.orcamentoDesenvolvimento) || 0,
             orcamentoManutencaoHospedagem: Number(lead.orcamentoManutencaoHospedagem) || 0
         };
+    };
+
+    const normalizarChamado = function (chamado) {
+        const status = chamado.status === "RESOLVIDO" ? "RESOLVIDO" : "ABERTO";
+        return {
+            id: chamado.id,
+            clienteId: chamado.clienteId,
+            descricaoProblema: chamado.descricaoProblema || "Sem descricao",
+            status: status
+        };
+    };
+
+    const obterNomeClientePorId = function (clienteId) {
+        const cliente = clientes.find(function (item) {
+            return item.id === clienteId;
+        });
+        return cliente ? cliente.nome : "Cliente nao encontrado";
+    };
+
+    const setChamadoFeedback = function (mensagem, erro) {
+        if (!elementos.chamadoFeedback) {
+            return;
+        }
+
+        elementos.chamadoFeedback.textContent = mensagem;
+        elementos.chamadoFeedback.style.color = erro ? "#b91c1c" : "#0f766e";
+    };
+
+    const popularSelectClientesChamado = function () {
+        if (!elementos.chamadoClienteSelect) {
+            return;
+        }
+
+        const valorAtual = elementos.chamadoClienteSelect.value;
+        elementos.chamadoClienteSelect.innerHTML = '<option value="">Selecione um cliente</option>';
+
+        clientes.forEach(function (cliente) {
+            const option = document.createElement("option");
+            option.value = cliente.id;
+            option.textContent = cliente.nome;
+            elementos.chamadoClienteSelect.appendChild(option);
+        });
+
+        if (valorAtual) {
+            elementos.chamadoClienteSelect.value = valorAtual;
+        }
     };
 
     const setLeadFeedback = function (mensagem, erro) {
@@ -657,6 +710,128 @@ window.addEventListener("DOMContentLoaded", function () {
         leads.splice(0, leads.length, ...lista.map(normalizarLead));
     };
 
+    const carregarChamadosBackend = async function () {
+        const data = await buscarJson("/chamados");
+        const lista = Array.isArray(data) ? data : [];
+        chamados.splice(0, chamados.length, ...lista.map(normalizarChamado));
+    };
+
+    const renderChamados = function () {
+        if (!elementos.chamadosLista) {
+            return;
+        }
+
+        elementos.chamadosLista.innerHTML = "";
+
+        if (chamados.length === 0) {
+            elementos.chamadosLista.innerHTML = "<li class=\"chamado-item\"><p>Nenhum chamado aberto ainda.</p></li>";
+            return;
+        }
+
+        chamados.forEach(function (chamado) {
+            const item = document.createElement("li");
+            item.className = "chamado-item";
+
+            const statusClass = chamado.status === "RESOLVIDO" ? "resolvido" : "aberto";
+            const statusLabel = chamado.status === "RESOLVIDO" ? "Resolvido" : "Aberto";
+            const proximoStatus = chamado.status === "RESOLVIDO" ? "ABERTO" : "RESOLVIDO";
+            const acaoTexto = chamado.status === "RESOLVIDO" ? "Reabrir" : "Marcar como resolvido";
+
+            item.innerHTML = ""
+                + "<div class=\"chamado-topo\">"
+                + "<h4>" + obterNomeClientePorId(chamado.clienteId) + "</h4>"
+                + "<span class=\"chamado-status " + statusClass + "\">" + statusLabel + "</span>"
+                + "</div>"
+                + "<p>" + chamado.descricaoProblema + "</p>"
+                + "<button type=\"button\" class=\"chamado-acao\" data-id=\"" + chamado.id + "\" data-status=\"" + proximoStatus + "\">" + acaoTexto + "</button>";
+
+            const botaoAcao = item.querySelector(".chamado-acao");
+            if (botaoAcao) {
+                botaoAcao.addEventListener("click", async function () {
+                    try {
+                        await atualizarStatusChamado(chamado.id, proximoStatus);
+                    } catch (error) {
+                        const mensagem = error instanceof Error && error.message
+                            ? error.message
+                            : "Nao foi possivel atualizar status do chamado.";
+                        setChamadoFeedback(mensagem, true);
+                    }
+                });
+            }
+
+            elementos.chamadosLista.appendChild(item);
+        });
+    };
+
+    const salvarChamado = async function () {
+        if (!elementos.chamadoClienteSelect || !elementos.chamadoDescricaoInput) {
+            return;
+        }
+
+        const clienteId = elementos.chamadoClienteSelect.value;
+        const descricaoProblema = elementos.chamadoDescricaoInput.value.trim();
+
+        if (!clienteId || !descricaoProblema) {
+            throw new Error("Selecione um cliente e descreva o problema do chamado.");
+        }
+
+        const payload = {
+            clienteId: clienteId,
+            descricaoProblema: descricaoProblema,
+            status: "ABERTO"
+        };
+
+        const response = await fetch("/chamados", {
+            method: "POST",
+            headers: obterHeadersComCsrf({
+                "Content-Type": "application/json",
+                Accept: "application/json"
+            }),
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const mensagemErro = await obterMensagemErroApi(response, "Falha ao abrir chamado");
+            throw new Error(mensagemErro);
+        }
+
+        await carregarChamadosBackend();
+        renderChamados();
+        setChamadoFeedback("Chamado aberto com sucesso.", false);
+
+        if (elementos.chamadoForm) {
+            elementos.chamadoForm.reset();
+        }
+    };
+
+    const atualizarStatusChamado = async function (chamadoId, status) {
+        const response = await fetch(
+            "/chamados/" + encodeURIComponent(chamadoId) + "/status?status=" + encodeURIComponent(status),
+            {
+                method: "PUT",
+                headers: obterHeadersComCsrf({
+                    Accept: "application/json"
+                })
+            }
+        );
+
+        if (!response.ok) {
+            const mensagemErro = await obterMensagemErroApi(response, "Falha ao atualizar status do chamado");
+            throw new Error(mensagemErro);
+        }
+
+        const chamadoAtualizado = normalizarChamado(await response.json());
+        const index = chamados.findIndex(function (item) {
+            return item.id === chamadoAtualizado.id;
+        });
+        if (index >= 0) {
+            chamados[index] = chamadoAtualizado;
+        }
+
+        renderChamados();
+        setChamadoFeedback("Status do chamado atualizado com sucesso.", false);
+    };
+
     const salvarLead = async function () {
         if (!elementos.leadNomeInput || !elementos.leadTelefoneInput || !elementos.leadOrcDevInput || !elementos.leadOrcManutencaoInput) {
             return;
@@ -807,6 +982,8 @@ window.addEventListener("DOMContentLoaded", function () {
         const data = await buscarJson("/clientes/dashboard");
         const lista = Array.isArray(data) ? data : [];
         clientes.splice(0, clientes.length, ...lista.map(normalizarCliente));
+        popularSelectClientesChamado();
+        renderChamados();
     };
 
     const salvarNovoCliente = async function () {
@@ -1007,6 +1184,19 @@ window.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    if (elementos.chamadoForm) {
+        elementos.chamadoForm.addEventListener("submit", async function () {
+            try {
+                await salvarChamado();
+            } catch (error) {
+                const mensagem = error instanceof Error && error.message
+                    ? error.message
+                    : "Nao foi possivel abrir chamado agora.";
+                setChamadoFeedback(mensagem, true);
+            }
+        });
+    }
+
     const iniciarPainel = async function () {
         try {
             await carregarClientesBackend();
@@ -1036,7 +1226,15 @@ window.addEventListener("DOMContentLoaded", function () {
             setLeadFeedback("Nao foi possivel carregar leads do backend no momento.", true);
         }
 
+        try {
+            await carregarChamadosBackend();
+            setChamadoFeedback("Chamados carregados do backend.", false);
+        } catch (error) {
+            setChamadoFeedback("Nao foi possivel carregar chamados do backend no momento.", true);
+        }
+
         renderLeads();
+        renderChamados();
     };
 
     iniciarPainel();

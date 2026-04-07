@@ -652,6 +652,110 @@ body.dashboard-page {
     cursor: not-allowed;
 }
 
+.dashboard-page .chamado-form {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.dashboard-page .chamado-form label {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.dashboard-page .chamado-form select,
+.dashboard-page .chamado-form textarea {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.dashboard-page .chamado-form textarea {
+    resize: vertical;
+    min-height: 110px;
+}
+
+.dashboard-page .chamado-form button {
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #ffffff;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.dashboard-page .chamados-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 10px;
+}
+
+.dashboard-page .chamado-item {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    background: #f8fafc;
+}
+
+.dashboard-page .chamado-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.dashboard-page .chamado-topo h4 {
+    margin: 0;
+    font-size: 15px;
+}
+
+.dashboard-page .chamado-status {
+    border-radius: 999px;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.dashboard-page .chamado-status.aberto {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.dashboard-page .chamado-status.resolvido {
+    background: #e0f2fe;
+    color: #0c4a6e;
+    border: 1px solid #7dd3fc;
+}
+
+.dashboard-page .chamado-item p {
+    margin: 0 0 8px;
+    color: var(--muted);
+    font-size: 13px;
+    white-space: pre-wrap;
+}
+
+.dashboard-page .chamado-acao {
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0369a1, #0f766e);
+    color: #ffffff;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 @media (max-width: 900px) {
     .dashboard-page .dashboard-shell {
         grid-template-columns: 1fr;
