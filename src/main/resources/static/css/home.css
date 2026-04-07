@@ -773,6 +773,93 @@ body.dashboard-page {
     cursor: pointer;
 }
 
+.dashboard-page .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.58);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+    padding: 16px;
+}
+
+.dashboard-page .modal-overlay[hidden] {
+    display: none !important;
+}
+
+.dashboard-page .modal-card {
+    width: min(680px, 100%);
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 24px 56px rgba(15, 23, 42, 0.28);
+    padding: 16px;
+    display: grid;
+    gap: 10px;
+}
+
+.dashboard-page .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.dashboard-page .modal-head h4 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.dashboard-page .modal-close {
+    border: 0;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    font-size: 22px;
+    line-height: 1;
+    background: #f1f5f9;
+    color: #0f172a;
+    cursor: pointer;
+}
+
+.dashboard-page #chamado-editar-texto {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 180px;
+}
+
+.dashboard-page .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.dashboard-page .modal-btn-secondary,
+.dashboard-page .modal-btn-primary {
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.dashboard-page .modal-btn-secondary {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.dashboard-page .modal-btn-primary {
+    background: linear-gradient(135deg, #0369a1, #0f766e);
+    color: #ffffff;
+}
+
 @media (max-width: 900px) {
     .dashboard-page .dashboard-shell {
         grid-template-columns: 1fr;

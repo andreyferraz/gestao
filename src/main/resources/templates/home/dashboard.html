@@ -250,6 +250,20 @@
         </section>
     </main>
 </div>
-<script defer src="/js/dashboard.js?v=13" th:src="@{/js/dashboard.js(v=13)}"></script>
+<div id="chamado-editar-modal" class="modal-overlay" hidden>
+    <dialog id="chamado-editar-dialog" class="modal-card" aria-labelledby="chamado-editar-titulo">
+        <div class="modal-head">
+            <h4 id="chamado-editar-titulo">Editar Texto do Chamado</h4>
+            <button id="chamado-editar-fechar" type="button" class="modal-close" aria-label="Fechar">×</button>
+        </div>
+        <label for="chamado-editar-texto">Descrição do problema</label>
+        <textarea id="chamado-editar-texto" rows="8" placeholder="Descreva o problema..." required></textarea>
+        <div class="modal-actions">
+            <button id="chamado-editar-cancelar" type="button" class="modal-btn-secondary">Cancelar</button>
+            <button id="chamado-editar-salvar" type="button" class="modal-btn-primary">Salvar alterações</button>
+        </div>
+    </dialog>
+</div>
+<script defer src="/js/dashboard.js?v=14" th:src="@{/js/dashboard.js(v=14)}"></script>
 </body>
 </html>

@@ -57,6 +57,12 @@ window.addEventListener("DOMContentLoaded", function () {
         , chamadoSalvarButton: document.getElementById("chamado-salvar")
         , chamadosLista: document.getElementById("chamados-lista")
         , chamadoFeedback: document.getElementById("chamado-feedback")
+        , chamadoEditarModal: document.getElementById("chamado-editar-modal")
+        , chamadoEditarDialog: document.getElementById("chamado-editar-dialog")
+        , chamadoEditarTextoInput: document.getElementById("chamado-editar-texto")
+        , chamadoEditarSalvarButton: document.getElementById("chamado-editar-salvar")
+        , chamadoEditarCancelarButton: document.getElementById("chamado-editar-cancelar")
+        , chamadoEditarFecharButton: document.getElementById("chamado-editar-fechar")
     };
 
     if (!elementos.lista || !elementos.detalhe || !elementos.reciboButton || !elementos.reciboPreview) {
@@ -67,6 +73,7 @@ window.addEventListener("DOMContentLoaded", function () {
     let clienteEmEdicaoId = null;
     let leadSelecionado = null;
     let leadEmEdicaoId = null;
+    let chamadoEmEdicao = null;
 
     const nomesMeses = [
         "Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho",
@@ -234,6 +241,33 @@ window.addEventListener("DOMContentLoaded", function () {
 
         elementos.chamadoFeedback.textContent = mensagem;
         elementos.chamadoFeedback.style.color = erro ? "#b91c1c" : "#0f766e";
+    };
+
+    const abrirModalEdicaoChamado = function (chamado) {
+        if (!elementos.chamadoEditarModal || !elementos.chamadoEditarTextoInput || !chamado) {
+            return;
+        }
+
+        chamadoEmEdicao = chamado;
+        elementos.chamadoEditarTextoInput.value = chamado.descricaoProblema || "";
+        elementos.chamadoEditarModal.hidden = false;
+        if (elementos.chamadoEditarDialog && !elementos.chamadoEditarDialog.open) {
+            elementos.chamadoEditarDialog.showModal();
+        }
+        elementos.chamadoEditarTextoInput.focus();
+    };
+
+    const fecharModalEdicaoChamado = function () {
+        if (!elementos.chamadoEditarModal || !elementos.chamadoEditarTextoInput) {
+            return;
+        }
+
+        chamadoEmEdicao = null;
+        elementos.chamadoEditarTextoInput.value = "";
+        if (elementos.chamadoEditarDialog && elementos.chamadoEditarDialog.open) {
+            elementos.chamadoEditarDialog.close();
+        }
+        elementos.chamadoEditarModal.hidden = true;
     };
 
     const popularSelectClientesChamado = function () {
@@ -764,15 +798,8 @@ window.addEventListener("DOMContentLoaded", function () {
 
             const botaoEditar = item.querySelector(".chamado-editar");
             if (botaoEditar) {
-                botaoEditar.addEventListener("click", async function () {
-                    try {
-                        await editarDescricaoChamado(chamado.id, chamado.descricaoProblema);
-                    } catch (error) {
-                        const mensagem = error instanceof Error && error.message
-                            ? error.message
-                            : "Nao foi possivel editar o chamado.";
-                        setChamadoFeedback(mensagem, true);
-                    }
+                botaoEditar.addEventListener("click", function () {
+                    abrirModalEdicaoChamado(chamado);
                 });
             }
 
@@ -849,9 +876,8 @@ window.addEventListener("DOMContentLoaded", function () {
         setChamadoFeedback("Status do chamado atualizado com sucesso.", false);
     };
 
-    const editarDescricaoChamado = async function (chamadoId, descricaoAtual) {
-        const novaDescricao = window.prompt("Edite o texto do chamado:", descricaoAtual || "");
-        if (novaDescricao === null) {
+    const editarDescricaoChamado = async function (chamadoId, novaDescricao) {
+        if (novaDescricao === null || novaDescricao === undefined) {
             return;
         }
 
@@ -889,6 +915,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
         renderChamados();
         setChamadoFeedback("Texto do chamado atualizado com sucesso.", false);
+        fecharModalEdicaoChamado();
     };
 
     const salvarLead = async function () {
@@ -1252,6 +1279,43 @@ window.addEventListener("DOMContentLoaded", function () {
                     ? error.message
                     : "Nao foi possivel abrir chamado agora.";
                 setChamadoFeedback(mensagem, true);
+            }
+        });
+    }
+
+    if (elementos.chamadoEditarSalvarButton) {
+        elementos.chamadoEditarSalvarButton.addEventListener("click", async function () {
+            if (!chamadoEmEdicao || !elementos.chamadoEditarTextoInput) {
+                return;
+            }
+
+            try {
+                await editarDescricaoChamado(chamadoEmEdicao.id, elementos.chamadoEditarTextoInput.value);
+            } catch (error) {
+                const mensagem = error instanceof Error && error.message
+                    ? error.message
+                    : "Nao foi possivel editar o chamado.";
+                setChamadoFeedback(mensagem, true);
+            }
+        });
+    }
+
+    if (elementos.chamadoEditarCancelarButton) {
+        elementos.chamadoEditarCancelarButton.addEventListener("click", function () {
+            fecharModalEdicaoChamado();
+        });
+    }
+
+    if (elementos.chamadoEditarFecharButton) {
+        elementos.chamadoEditarFecharButton.addEventListener("click", function () {
+            fecharModalEdicaoChamado();
+        });
+    }
+
+    if (elementos.chamadoEditarModal) {
+        elementos.chamadoEditarModal.addEventListener("click", function (event) {
+            if (event.target === elementos.chamadoEditarModal) {
+                fecharModalEdicaoChamado();
             }
         });
     }
