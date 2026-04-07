@@ -1,5 +1,6 @@
 package com.andreyferraz.gestao.module.cliente;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -22,12 +23,17 @@ public class Cliente {
 
 	private String nome;
 
+	private String contato;
+
 	@Column("dominio_aplicacao")
 	private String dominioAplicacao;
 
 	@Column("data_vencimento_dominio")
 	private LocalDate dataVencimentoDominio;
 
-	private Boolean ativo;
+	@Column("valor_mensal")
+	private BigDecimal valorMensal;
+
+	private Integer ativo;
 
 }

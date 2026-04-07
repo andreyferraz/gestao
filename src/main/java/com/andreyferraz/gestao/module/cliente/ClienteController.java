@@ -40,6 +40,11 @@ public class ClienteController {
 		return ResponseEntity.ok(clienteService.listarTodos());
 	}
 
+	@GetMapping("/dashboard")
+	public ResponseEntity<List<ClienteDashboardDto>> listarDashboard() {
+		return ResponseEntity.ok(clienteService.listarResumoDashboard());
+	}
+
 	@GetMapping("/{id}")
 	public ResponseEntity<Cliente> buscarPorId(@PathVariable UUID id) {
 		return ResponseEntity.ok(clienteService.buscarPorId(id));

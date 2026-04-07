@@ -317,6 +317,51 @@ body.dashboard-page {
     margin: 0;
 }
 
+.dashboard-page .detalhe-actions {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.dashboard-page .detalhe-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.dashboard-page #editar-cliente {
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0369a1, #0f766e);
+    color: #ffffff;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.dashboard-page #editar-cliente:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.dashboard-page #excluir-cliente {
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #b91c1c, #dc2626);
+    color: #ffffff;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    width: fit-content;
+}
+
+.dashboard-page #excluir-cliente:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 .dashboard-page .cadastro-form {
     display: grid;
     gap: 8px;

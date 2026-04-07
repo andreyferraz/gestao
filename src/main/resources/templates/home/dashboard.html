@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>Dashboard | Gestão</title>
     <link rel="stylesheet" href="/css/app.css" th:href="@{/css/app.css}">
 </head>
@@ -61,9 +63,9 @@
             <article id="tab-clientes" class="panel tab-panel active">
                 <div class="panel-head">
                     <h3>Clientes</h3>
-                    <span class="chip">Estático</span>
+                    <span class="chip">Backend</span>
                 </div>
-                <p class="panel-sub">Lista inicial com valor mensal por cliente.</p>
+                <p class="panel-sub">Lista sincronizada com os clientes salvos no backend.</p>
                 <ul id="clientes-lista" class="clientes-lista"></ul>
             </article>
 
@@ -75,6 +77,14 @@
 
                 <div id="cliente-detalhe" class="cliente-detalhe empty">
                     <p>Selecione um cliente na lista para ver as informacoes.</p>
+                </div>
+
+                <div class="detalhe-actions">
+                    <div class="detalhe-buttons">
+                        <button id="editar-cliente" type="button" disabled>Editar cliente</button>
+                        <button id="excluir-cliente" type="button" disabled>Excluir cliente</button>
+                    </div>
+                    <small id="detalhe-feedback" class="obs"></small>
                 </div>
 
                 <div class="recibo-box">
@@ -92,11 +102,14 @@
                 <div class="panel-head">
                     <h3>Novo Cliente</h3>
                 </div>
-                <p class="panel-sub">Tela de cadastro inicial (estática).</p>
+                <p class="panel-sub">Cadastro conectado ao backend de clientes.</p>
 
-                <form class="cadastro-form" action="#" method="post" onsubmit="return false;">
+                <form id="cadastro-form" class="cadastro-form" action="#" method="post" onsubmit="return false;">
                     <label for="novo-nome">Nome</label>
                     <input id="novo-nome" type="text" placeholder="Ex.: Empresa Orion" required>
+
+                    <label for="novo-contato">Contato</label>
+                    <input id="novo-contato" type="text" placeholder="Ex.: (11) 98765-4321" required>
 
                     <label for="novo-dominio">Dominio de aplicacao</label>
                     <input id="novo-dominio" type="text" placeholder="orion.com.br" required>
@@ -113,9 +126,10 @@
                         <option value="false">Nao</option>
                     </select>
 
-                    <button type="submit">Salvar Cliente</button>
+                    <button id="salvar-cliente" type="submit">Salvar Cliente</button>
                 </form>
-                <small class="obs">* Nesta etapa, o cadastro esta apenas no front-end estático.</small>
+                <small id="cadastro-modo" class="obs">Modo atual: novo cadastro.</small>
+                <small id="cadastro-feedback" class="obs">* Preencha os dados para criar um cliente no sistema.</small>
             </article>
 
             <article id="tab-relatorios" class="panel tab-panel">
@@ -197,6 +211,6 @@
         </section>
     </main>
 </div>
-<script defer src="/js/dashboard.js?v=2" th:src="@{/js/dashboard.js(v=2)}"></script>
+<script defer src="/js/dashboard.js?v=8" th:src="@{/js/dashboard.js(v=8)}"></script>
 </body>
 </html>
