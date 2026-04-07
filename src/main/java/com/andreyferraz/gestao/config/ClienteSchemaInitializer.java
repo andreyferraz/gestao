@@ -40,7 +40,8 @@ public class ClienteSchemaInitializer {
 						+ "ELSE date(CAST(data_vencimento_dominio AS INTEGER), 'unixepoch') "
 						+ "END "
 						+ "WHERE data_vencimento_dominio IS NOT NULL "
-						+ "AND trim(data_vencimento_dominio) GLOB '[0-9]*'");
+						+ "AND trim(data_vencimento_dominio) NOT GLOB '*[^0-9]*' "
+						+ "AND length(trim(data_vencimento_dominio)) IN (10, 13)");
 
 		// Normalize legacy boolean-like values to SQLite integer convention 0/1.
 		jdbcTemplate.execute(
