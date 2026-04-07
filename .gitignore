@@ -36,3 +36,6 @@ build/
 ### Properties (podem conter dados sensíveis) ###
 src/main/resources/application.properties
 src/main/resources/application-*.properties
+
+### Banco local ###
+gestao.db
