@@ -23,7 +23,13 @@ public class ChamadoService {
 			chamado.setStatus(Chamado.Status.ABERTO);
 		}
 
-		return chamadoRepository.save(chamado);
+		chamadoRepository.inserir(
+				chamado.getId(),
+				chamado.getClienteId(),
+				chamado.getDescricaoProblema(),
+				chamado.getStatus());
+
+		return buscarPorId(chamado.getId());
 	}
 
 	public List<Chamado> listarTodos() {
@@ -40,9 +46,9 @@ public class ChamadoService {
 			throw new IllegalArgumentException("Status do chamado e obrigatorio.");
 		}
 
-		Chamado chamado = buscarPorId(id);
-		chamado.setStatus(status);
-		return chamadoRepository.save(chamado);
+		buscarPorId(id);
+		chamadoRepository.atualizarStatus(id, status);
+		return buscarPorId(id);
 	}
 
 	private void validarChamado(Chamado chamado) {
