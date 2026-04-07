@@ -1,6 +1,7 @@
 window.addEventListener("DOMContentLoaded", function () {
     const clientes = [];
     const leads = [];
+    const CHAVE_ABA_ATIVA = "gestao.dashboard.abaAtiva";
 
     const elementos = {
         kpiClientes: document.getElementById("kpi-clientes"),
@@ -73,6 +74,30 @@ window.addEventListener("DOMContentLoaded", function () {
         elementos.tabPanels.forEach(function (panel) {
             panel.classList.toggle("active", panel.id === tabId);
         });
+
+        try {
+            window.localStorage.setItem(CHAVE_ABA_ATIVA, tabId);
+        } catch (error) {
+            // Ignore storage failures and keep navigation working.
+        }
+    };
+
+    const obterAbaInicial = function () {
+        const abaPadrao = "tab-clientes";
+        const abasDisponiveis = new Set(elementos.tabPanels.map(function (panel) {
+            return panel.id;
+        }));
+
+        try {
+            const abaSalva = window.localStorage.getItem(CHAVE_ABA_ATIVA);
+            if (abaSalva && abasDisponiveis.has(abaSalva)) {
+                return abaSalva;
+            }
+        } catch (error) {
+            // Ignore storage failures and use default tab.
+        }
+
+        return abaPadrao;
     };
 
     const formatarMoeda = function (valor) {
@@ -996,7 +1021,7 @@ window.addEventListener("DOMContentLoaded", function () {
         renderDetalheLead(null);
         atualizarModoCadastro();
         atualizarModoLead();
-        ativarAba("tab-clientes");
+        ativarAba(obterAbaInicial());
         definirModoRelatorio("mensal");
         try {
             await gerarRelatorioMensal();
