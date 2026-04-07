@@ -185,7 +185,7 @@
                     <h3>Leads</h3>
                     <span class="chip">Pré-venda</span>
                 </div>
-                <p class="panel-sub">Cadastro estático de potenciais clientes para acompanhamento comercial.</p>
+                <p class="panel-sub">Cadastro e listagem de leads salvos no backend.</p>
 
                 <form id="lead-form" class="lead-form" action="#" method="post" onsubmit="return false;">
                     <label for="lead-nome">Nome</label>
@@ -205,13 +205,24 @@
 
                     <button id="lead-salvar" type="submit">Salvar Lead</button>
                 </form>
+                <small id="lead-modo" class="obs">Modo atual: novo lead.</small>
 
                 <ul id="leads-lista" class="leads-lista" aria-label="Lista de leads cadastrados"></ul>
-                <small class="obs">* Leads salvos apenas no front-end estático nesta etapa.</small>
+
+                <div id="lead-detalhe" class="lead-detalhe empty">
+                    <p>Selecione um lead para ver os detalhes.</p>
+                </div>
+
+                <div class="lead-actions">
+                    <button id="lead-editar" type="button" disabled>Editar lead</button>
+                    <button id="lead-excluir" type="button" disabled>Excluir lead</button>
+                </div>
+
+                <small id="lead-feedback" class="obs">* Carregando leads do backend.</small>
             </article>
         </section>
     </main>
 </div>
-<script defer src="/js/dashboard.js?v=10" th:src="@{/js/dashboard.js(v=10)}"></script>
+<script defer src="/js/dashboard.js?v=12" th:src="@{/js/dashboard.js(v=12)}"></script>
 </body>
 </html>

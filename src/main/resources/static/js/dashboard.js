@@ -1,16 +1,6 @@
 window.addEventListener("DOMContentLoaded", function () {
     const clientes = [];
-
-    const leads = [
-        {
-            id: "l1",
-            nome: "Clara Mkt",
-            telefone: "(11) 99876-1122",
-            observacoes: "Landing page + blog institucional.",
-            orcamentoDesenvolvimento: 2800.0,
-            orcamentoManutencaoHospedagem: 350.0
-        }
-    ];
+    const leads = [];
 
     const elementos = {
         kpiClientes: document.getElementById("kpi-clientes"),
@@ -52,7 +42,13 @@ window.addEventListener("DOMContentLoaded", function () {
         leadOrcDevInput: document.getElementById("lead-orcamento-dev"),
         leadOrcManutencaoInput: document.getElementById("lead-orcamento-manutencao"),
         leadObsInput: document.getElementById("lead-observacoes"),
-        leadsLista: document.getElementById("leads-lista")
+        leadSalvarButton: document.getElementById("lead-salvar"),
+        leadsLista: document.getElementById("leads-lista"),
+        leadFeedback: document.getElementById("lead-feedback"),
+        leadModo: document.getElementById("lead-modo"),
+        leadDetalhe: document.getElementById("lead-detalhe"),
+        leadEditarButton: document.getElementById("lead-editar"),
+        leadExcluirButton: document.getElementById("lead-excluir")
     };
 
     if (!elementos.lista || !elementos.detalhe || !elementos.reciboButton || !elementos.reciboPreview) {
@@ -61,6 +57,8 @@ window.addEventListener("DOMContentLoaded", function () {
 
     let clienteSelecionado = null;
     let clienteEmEdicaoId = null;
+    let leadSelecionado = null;
+    let leadEmEdicaoId = null;
 
     const nomesMeses = [
         "Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho",
@@ -167,6 +165,89 @@ window.addEventListener("DOMContentLoaded", function () {
             ativo: ativoNormalizado,
             valorMensal: Number(cliente.valorMensal) || 0
         };
+    };
+
+    const normalizarLead = function (lead) {
+        return {
+            id: lead.id,
+            nome: lead.nome || "Sem nome",
+            telefone: lead.telefone || "Nao informado",
+            observacoes: lead.observacoes || "",
+            orcamentoDesenvolvimento: Number(lead.orcamentoDesenvolvimento) || 0,
+            orcamentoManutencaoHospedagem: Number(lead.orcamentoManutencaoHospedagem) || 0
+        };
+    };
+
+    const setLeadFeedback = function (mensagem, erro) {
+        if (!elementos.leadFeedback) {
+            return;
+        }
+
+        elementos.leadFeedback.textContent = mensagem;
+        elementos.leadFeedback.style.color = erro ? "#b91c1c" : "#0f766e";
+    };
+
+    const atualizarModoLead = function () {
+        const emEdicao = Boolean(leadEmEdicaoId);
+        if (elementos.leadModo) {
+            elementos.leadModo.textContent = emEdicao
+                ? "Modo atual: edicao de lead."
+                : "Modo atual: novo lead.";
+        }
+        if (elementos.leadSalvarButton) {
+            elementos.leadSalvarButton.textContent = emEdicao
+                ? "Atualizar Lead"
+                : "Salvar Lead";
+        }
+    };
+
+    const preencherFormularioComLead = function (lead) {
+        if (!lead || !elementos.leadNomeInput || !elementos.leadTelefoneInput || !elementos.leadOrcDevInput || !elementos.leadOrcManutencaoInput) {
+            return;
+        }
+
+        elementos.leadNomeInput.value = lead.nome || "";
+        elementos.leadTelefoneInput.value = lead.telefone || "";
+        elementos.leadOrcDevInput.value = String(Number(lead.orcamentoDesenvolvimento) || 0);
+        elementos.leadOrcManutencaoInput.value = String(Number(lead.orcamentoManutencaoHospedagem) || 0);
+        if (elementos.leadObsInput) {
+            elementos.leadObsInput.value = lead.observacoes || "";
+        }
+    };
+
+    const renderDetalheLead = function (lead) {
+        if (!elementos.leadDetalhe) {
+            return;
+        }
+
+        if (!lead) {
+            elementos.leadDetalhe.classList.add("empty");
+            elementos.leadDetalhe.innerHTML = "<p>Selecione um lead para ver os detalhes.</p>";
+            if (elementos.leadEditarButton) {
+                elementos.leadEditarButton.disabled = true;
+            }
+            if (elementos.leadExcluirButton) {
+                elementos.leadExcluirButton.disabled = true;
+            }
+            return;
+        }
+
+        elementos.leadDetalhe.classList.remove("empty");
+        elementos.leadDetalhe.innerHTML = ""
+            + "<dl>"
+            + "<dt>Nome</dt><dd>" + lead.nome + "</dd>"
+            + "<dt>Telefone</dt><dd>" + lead.telefone + "</dd>"
+            + "<dt>Desenvolvimento</dt><dd>" + formatarMoeda(lead.orcamentoDesenvolvimento) + "</dd>"
+            + "<dt>Manutencao/Hospedagem</dt><dd>" + formatarMoeda(lead.orcamentoManutencaoHospedagem) + "</dd>"
+            + "<dt>Observacoes</dt><dd>" + (lead.observacoes || "Sem observacoes") + "</dd>"
+            + "</dl>";
+
+        if (elementos.leadEditarButton) {
+            elementos.leadEditarButton.disabled = false;
+        }
+        if (elementos.leadExcluirButton) {
+            elementos.leadExcluirButton.disabled = false;
+        }
     };
 
     const setCadastroFeedback = function (mensagem, erro) {
@@ -526,7 +607,8 @@ window.addEventListener("DOMContentLoaded", function () {
 
         leads.forEach(function (lead) {
             const item = document.createElement("li");
-            item.className = "lead-item";
+            item.className = "lead-item" + (leadSelecionado && leadSelecionado.id === lead.id ? " active" : "");
+            item.dataset.id = lead.id;
             item.innerHTML = ""
                 + "<h4>" + lead.nome + "</h4>"
                 + "<p><strong>Telefone:</strong> " + lead.telefone + "</p>"
@@ -534,11 +616,23 @@ window.addEventListener("DOMContentLoaded", function () {
                 + " | <strong>Manutencao/Hospedagem:</strong> " + formatarMoeda(lead.orcamentoManutencaoHospedagem) + "</p>"
                 + "<p><strong>Observacoes:</strong> " + (lead.observacoes || "Sem observacoes") + "</p>";
 
+            item.addEventListener("click", function () {
+                leadSelecionado = lead;
+                renderLeads();
+                renderDetalheLead(leadSelecionado);
+            });
+
             elementos.leadsLista.appendChild(item);
         });
     };
 
-    const salvarLead = function () {
+    const carregarLeadsBackend = async function () {
+        const data = await buscarJson("/leads");
+        const lista = Array.isArray(data) ? data : [];
+        leads.splice(0, leads.length, ...lista.map(normalizarLead));
+    };
+
+    const salvarLead = async function () {
         if (!elementos.leadNomeInput || !elementos.leadTelefoneInput || !elementos.leadOrcDevInput || !elementos.leadOrcManutencaoInput) {
             return;
         }
@@ -550,23 +644,106 @@ window.addEventListener("DOMContentLoaded", function () {
         const observacoes = elementos.leadObsInput ? elementos.leadObsInput.value.trim() : "";
 
         if (!nome || !telefone || Number.isNaN(orcDesenvolvimento) || Number.isNaN(orcManutencao)) {
-            return;
+            throw new Error("Preencha os campos obrigatorios do lead.");
         }
 
-        leads.unshift({
-            id: "l" + Date.now(),
+        const payload = {
             nome: nome,
             telefone: telefone,
             observacoes: observacoes,
             orcamentoDesenvolvimento: orcDesenvolvimento,
             orcamentoManutencaoHospedagem: orcManutencao
+        };
+
+        const editando = Boolean(leadEmEdicaoId);
+        const url = editando
+            ? "/leads/" + encodeURIComponent(leadEmEdicaoId)
+            : "/leads";
+        const metodo = editando ? "PUT" : "POST";
+
+        const response = await fetch(url, {
+            method: metodo,
+            headers: obterHeadersComCsrf({
+                "Content-Type": "application/json",
+                Accept: "application/json"
+            }),
+            body: JSON.stringify(payload)
         });
 
+        if (!response.ok) {
+            const mensagemErro = await obterMensagemErroApi(response, "Falha ao salvar lead");
+            throw new Error(mensagemErro);
+        }
+
+        const leadSalvo = normalizarLead(await response.json());
+        if (editando) {
+            const index = leads.findIndex(function (lead) {
+                return lead.id === leadSalvo.id;
+            });
+            if (index >= 0) {
+                leads[index] = leadSalvo;
+            }
+        } else {
+            leads.unshift(leadSalvo);
+        }
+
+        try {
+            await carregarLeadsBackend();
+        } catch (error) {
+            // Keep optimistic update if list refresh fails.
+        }
+
+        leadSelecionado = leadSalvo;
+        leadEmEdicaoId = null;
+        atualizarModoLead();
+
         renderLeads();
+        renderDetalheLead(leadSelecionado);
+        setLeadFeedback(editando ? "Lead atualizado com sucesso." : "Lead salvo com sucesso.", false);
 
         if (elementos.leadForm) {
             elementos.leadForm.reset();
         }
+    };
+
+    const excluirLeadSelecionado = async function () {
+        if (!leadSelecionado || !leadSelecionado.id) {
+            return;
+        }
+
+        const confirmar = window.confirm("Deseja realmente excluir este lead?");
+        if (!confirmar) {
+            return;
+        }
+
+        const response = await fetch("/leads/" + encodeURIComponent(leadSelecionado.id), {
+            method: "DELETE",
+            headers: obterHeadersComCsrf({
+                Accept: "application/json"
+            })
+        });
+
+        if (!response.ok) {
+            const mensagemErro = await obterMensagemErroApi(response, "Falha ao excluir lead");
+            throw new Error(mensagemErro);
+        }
+
+        const idExcluido = leadSelecionado.id;
+        leadSelecionado = null;
+        leadEmEdicaoId = null;
+        atualizarModoLead();
+
+        const leadsRestantes = leads.filter(function (lead) {
+            return lead.id !== idExcluido;
+        });
+        leads.splice(0, leads.length, ...leadsRestantes);
+
+        renderLeads();
+        renderDetalheLead(null);
+        if (elementos.leadForm) {
+            elementos.leadForm.reset();
+        }
+        setLeadFeedback("Lead excluido com sucesso.", false);
     };
 
     const renderLista = function () {
@@ -754,8 +931,41 @@ window.addEventListener("DOMContentLoaded", function () {
     }
 
     if (elementos.leadForm) {
-        elementos.leadForm.addEventListener("submit", function () {
-            salvarLead();
+        elementos.leadForm.addEventListener("submit", async function () {
+            try {
+                await salvarLead();
+            } catch (error) {
+                const mensagem = error instanceof Error && error.message
+                    ? error.message
+                    : "Nao foi possivel salvar lead agora.";
+                setLeadFeedback(mensagem, true);
+            }
+        });
+    }
+
+    if (elementos.leadEditarButton) {
+        elementos.leadEditarButton.addEventListener("click", function () {
+            if (!leadSelecionado) {
+                return;
+            }
+
+            leadEmEdicaoId = leadSelecionado.id;
+            preencherFormularioComLead(leadSelecionado);
+            atualizarModoLead();
+            setLeadFeedback("Edite os campos e clique em Atualizar Lead.", false);
+        });
+    }
+
+    if (elementos.leadExcluirButton) {
+        elementos.leadExcluirButton.addEventListener("click", async function () {
+            try {
+                await excluirLeadSelecionado();
+            } catch (error) {
+                const mensagem = error instanceof Error && error.message
+                    ? error.message
+                    : "Nao foi possivel excluir lead agora.";
+                setLeadFeedback(mensagem, true);
+            }
         });
     }
 
@@ -783,7 +993,9 @@ window.addEventListener("DOMContentLoaded", function () {
         renderAlertasDominio();
         renderLista();
         renderDetalhe(null);
+        renderDetalheLead(null);
         atualizarModoCadastro();
+        atualizarModoLead();
         ativarAba("tab-clientes");
         definirModoRelatorio("mensal");
         try {
@@ -791,6 +1003,14 @@ window.addEventListener("DOMContentLoaded", function () {
         } catch (error) {
             elementos.reportPreview.innerHTML = "<p>Nao foi possivel carregar o relatorio mensal inicial.</p>";
         }
+
+        try {
+            await carregarLeadsBackend();
+            setLeadFeedback("Leads carregados do backend.", false);
+        } catch (error) {
+            setLeadFeedback("Nao foi possivel carregar leads do backend no momento.", true);
+        }
+
         renderLeads();
     };
 

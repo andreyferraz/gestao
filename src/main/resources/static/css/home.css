@@ -563,6 +563,13 @@ body.dashboard-page {
     border-radius: 10px;
     padding: 10px;
     background: #f8fafc;
+    cursor: pointer;
+}
+
+.dashboard-page .lead-item:hover,
+.dashboard-page .lead-item.active {
+    border-color: #0f766e;
+    background: #ecfeff;
 }
 
 .dashboard-page .lead-item h4 {
@@ -578,6 +585,71 @@ body.dashboard-page {
 
 .dashboard-page .lead-item p + p {
     margin-top: 4px;
+}
+
+.dashboard-page .lead-detalhe {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    background: #f8fafc;
+    margin-top: 12px;
+}
+
+.dashboard-page .lead-detalhe.empty {
+    color: var(--muted);
+    font-style: italic;
+}
+
+.dashboard-page .lead-detalhe dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 10px;
+    font-size: 14px;
+}
+
+.dashboard-page .lead-detalhe dt {
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.dashboard-page .lead-detalhe dd {
+    margin: 0;
+}
+
+.dashboard-page .lead-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.dashboard-page #lead-editar {
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0369a1, #0f766e);
+    color: #ffffff;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.dashboard-page #lead-excluir {
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #b91c1c, #dc2626);
+    color: #ffffff;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.dashboard-page #lead-editar:disabled,
+.dashboard-page #lead-excluir:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 @media (max-width: 900px) {

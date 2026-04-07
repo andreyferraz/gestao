@@ -25,3 +25,12 @@ CREATE TABLE IF NOT EXISTS usuarios (
 	ativo INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1)),
 	role TEXT NOT NULL DEFAULT 'ADMIN'
 );
+
+CREATE TABLE IF NOT EXISTS lead (
+	id TEXT PRIMARY KEY,
+	nome TEXT NOT NULL,
+	telefone TEXT NOT NULL,
+	orcamento_desenvolvimento NUMERIC NOT NULL DEFAULT 0,
+	orcamento_manutencao_hospedagem NUMERIC NOT NULL DEFAULT 0,
+	observacoes TEXT
+);
