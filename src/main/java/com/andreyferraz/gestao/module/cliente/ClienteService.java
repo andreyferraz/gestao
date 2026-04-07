@@ -6,7 +6,6 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -16,20 +15,18 @@ import lombok.RequiredArgsConstructor;
 public class ClienteService {
 
 	private final ClienteRepository clienteRepository;
-	private final JdbcTemplate jdbcTemplate;
 
 	public Cliente criar(Cliente cliente) {
 		if (cliente.getId() == null) {
 			cliente.setId(UUID.randomUUID());
 		}
 
-		jdbcTemplate.update(
-				"INSERT INTO cliente (id, nome, contato, dominio_aplicacao, data_vencimento_dominio, valor_mensal, ativo) VALUES (?, ?, ?, ?, ?, ?, ?)",
-				cliente.getId().toString(),
+		clienteRepository.inserir(
+				cliente.getId(),
 				cliente.getNome(),
 				cliente.getContato(),
 				cliente.getDominioAplicacao(),
-				cliente.getDataVencimentoDominio() != null ? cliente.getDataVencimentoDominio().toString() : null,
+				cliente.getDataVencimentoDominio(),
 				cliente.getValorMensal() != null ? cliente.getValorMensal() : BigDecimal.ZERO,
 				cliente.getAtivo() != null && cliente.getAtivo() == 1 ? 1 : 0);
 
@@ -68,15 +65,14 @@ public class ClienteService {
 	public Cliente atualizar(UUID id, Cliente clienteAtualizado) {
 		buscarPorId(id);
 
-		jdbcTemplate.update(
-				"UPDATE cliente SET nome = ?, contato = ?, dominio_aplicacao = ?, data_vencimento_dominio = ?, valor_mensal = ?, ativo = ? WHERE id = ?",
+		clienteRepository.atualizar(
+				id,
 				clienteAtualizado.getNome(),
 				clienteAtualizado.getContato(),
 				clienteAtualizado.getDominioAplicacao(),
-				clienteAtualizado.getDataVencimentoDominio() != null ? clienteAtualizado.getDataVencimentoDominio().toString() : null,
+				clienteAtualizado.getDataVencimentoDominio(),
 				clienteAtualizado.getValorMensal() != null ? clienteAtualizado.getValorMensal() : BigDecimal.ZERO,
-				clienteAtualizado.getAtivo() != null && clienteAtualizado.getAtivo() == 1 ? 1 : 0,
-				id.toString());
+				clienteAtualizado.getAtivo() != null && clienteAtualizado.getAtivo() == 1 ? 1 : 0);
 
 		return buscarPorId(id);
 	}
