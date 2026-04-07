@@ -46,4 +46,14 @@ public class ChamadoController {
 			@RequestParam Chamado.Status status) {
 		return ResponseEntity.ok(chamadoService.atualizarStatus(id, status));
 	}
+
+	@PutMapping("/{id}/descricao")
+	public ResponseEntity<Chamado> atualizarDescricao(
+			@PathVariable UUID id,
+			@RequestBody AtualizarDescricaoRequest request) {
+		return ResponseEntity.ok(chamadoService.atualizarDescricao(id, request.descricaoProblema()));
+	}
+
+	public record AtualizarDescricaoRequest(String descricaoProblema) {
+	}
 }

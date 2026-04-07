@@ -745,6 +745,23 @@ body.dashboard-page {
     white-space: pre-wrap;
 }
 
+.dashboard-page .chamado-botoes {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.dashboard-page .chamado-editar {
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #64748b, #475569);
+    color: #ffffff;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 .dashboard-page .chamado-acao {
     border: 0;
     border-radius: 10px;

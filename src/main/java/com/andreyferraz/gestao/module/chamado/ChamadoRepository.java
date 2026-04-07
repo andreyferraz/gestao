@@ -19,6 +19,10 @@ public interface ChamadoRepository extends CrudRepository<Chamado, UUID> {
 	@Query("UPDATE chamado SET status = :status WHERE id = :id")
 	void atualizarStatus(UUID id, Chamado.Status status);
 
+	@Modifying
+	@Query("UPDATE chamado SET descricao_problema = :descricaoProblema WHERE id = :id")
+	void atualizarDescricao(UUID id, String descricaoProblema);
+
 	@Query("SELECT id, cliente_id, descricao_problema, status FROM chamado ORDER BY rowid DESC")
 	List<Chamado> findAllOrderByRecente();
 }

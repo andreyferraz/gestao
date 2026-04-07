@@ -51,6 +51,16 @@ public class ChamadoService {
 		return buscarPorId(id);
 	}
 
+	public Chamado atualizarDescricao(UUID id, String descricaoProblema) {
+		if (descricaoProblema == null || descricaoProblema.isBlank()) {
+			throw new IllegalArgumentException("Descricao do problema e obrigatoria.");
+		}
+
+		buscarPorId(id);
+		chamadoRepository.atualizarDescricao(id, descricaoProblema.trim());
+		return buscarPorId(id);
+	}
+
 	private void validarChamado(Chamado chamado) {
 		if (chamado.getClienteId() == null) {
 			throw new IllegalArgumentException("Cliente do chamado e obrigatorio.");

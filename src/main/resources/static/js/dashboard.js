@@ -743,7 +743,10 @@ window.addEventListener("DOMContentLoaded", function () {
                 + "<span class=\"chamado-status " + statusClass + "\">" + statusLabel + "</span>"
                 + "</div>"
                 + "<p>" + chamado.descricaoProblema + "</p>"
-                + "<button type=\"button\" class=\"chamado-acao\" data-id=\"" + chamado.id + "\" data-status=\"" + proximoStatus + "\">" + acaoTexto + "</button>";
+                + "<div class=\"chamado-botoes\">"
+                + "<button type=\"button\" class=\"chamado-editar\" data-id=\"" + chamado.id + "\">Editar texto</button>"
+                + "<button type=\"button\" class=\"chamado-acao\" data-id=\"" + chamado.id + "\" data-status=\"" + proximoStatus + "\">" + acaoTexto + "</button>"
+                + "</div>";
 
             const botaoAcao = item.querySelector(".chamado-acao");
             if (botaoAcao) {
@@ -754,6 +757,20 @@ window.addEventListener("DOMContentLoaded", function () {
                         const mensagem = error instanceof Error && error.message
                             ? error.message
                             : "Nao foi possivel atualizar status do chamado.";
+                        setChamadoFeedback(mensagem, true);
+                    }
+                });
+            }
+
+            const botaoEditar = item.querySelector(".chamado-editar");
+            if (botaoEditar) {
+                botaoEditar.addEventListener("click", async function () {
+                    try {
+                        await editarDescricaoChamado(chamado.id, chamado.descricaoProblema);
+                    } catch (error) {
+                        const mensagem = error instanceof Error && error.message
+                            ? error.message
+                            : "Nao foi possivel editar o chamado.";
                         setChamadoFeedback(mensagem, true);
                     }
                 });
@@ -830,6 +847,48 @@ window.addEventListener("DOMContentLoaded", function () {
 
         renderChamados();
         setChamadoFeedback("Status do chamado atualizado com sucesso.", false);
+    };
+
+    const editarDescricaoChamado = async function (chamadoId, descricaoAtual) {
+        const novaDescricao = window.prompt("Edite o texto do chamado:", descricaoAtual || "");
+        if (novaDescricao === null) {
+            return;
+        }
+
+        const descricaoLimpa = novaDescricao.trim();
+        if (!descricaoLimpa) {
+            throw new Error("A descricao do chamado nao pode ficar vazia.");
+        }
+
+        const response = await fetch(
+            "/chamados/" + encodeURIComponent(chamadoId) + "/descricao",
+            {
+                method: "PUT",
+                headers: obterHeadersComCsrf({
+                    "Content-Type": "application/json",
+                    Accept: "application/json"
+                }),
+                body: JSON.stringify({
+                    descricaoProblema: descricaoLimpa
+                })
+            }
+        );
+
+        if (!response.ok) {
+            const mensagemErro = await obterMensagemErroApi(response, "Falha ao editar texto do chamado");
+            throw new Error(mensagemErro);
+        }
+
+        const chamadoAtualizado = normalizarChamado(await response.json());
+        const index = chamados.findIndex(function (item) {
+            return item.id === chamadoAtualizado.id;
+        });
+        if (index >= 0) {
+            chamados[index] = chamadoAtualizado;
+        }
+
+        renderChamados();
+        setChamadoFeedback("Texto do chamado atualizado com sucesso.", false);
     };
 
     const salvarLead = async function () {
