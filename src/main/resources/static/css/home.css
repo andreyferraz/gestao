@@ -135,6 +135,15 @@ body.dashboard-page {
     font-weight: 700;
     color: #f8fafc;
     background: rgba(15, 23, 42, 0.38);
+    cursor: pointer;
+}
+
+.dashboard-page .logout-form {
+    margin: 0;
+}
+
+.dashboard-page .logout-form .logout {
+    width: 100%;
 }
 
 .dashboard-page .main-content {
