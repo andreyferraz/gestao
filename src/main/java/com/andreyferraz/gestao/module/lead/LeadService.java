@@ -6,7 +6,6 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -16,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 public class LeadService {
 
 	private final LeadRepository leadRepository;
-	private final JdbcTemplate jdbcTemplate;
 
 	public Lead criar(Lead lead) {
 		validarLead(lead);
@@ -24,9 +22,8 @@ public class LeadService {
 			lead.setId(UUID.randomUUID());
 		}
 
-		jdbcTemplate.update(
-				"INSERT INTO lead (id, nome, telefone, orcamento_desenvolvimento, orcamento_manutencao_hospedagem, observacoes) VALUES (?, ?, ?, ?, ?, ?)",
-				lead.getId().toString(),
+		leadRepository.inserir(
+				lead.getId(),
 				lead.getNome(),
 				lead.getTelefone(),
 				lead.getOrcamentoDesenvolvimento() != null ? lead.getOrcamentoDesenvolvimento() : BigDecimal.ZERO,
