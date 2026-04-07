@@ -16,6 +16,7 @@ window.addEventListener("DOMContentLoaded", function () {
         kpiClientes: document.getElementById("kpi-clientes"),
         kpiReceita: document.getElementById("kpi-receita"),
         kpiDominios: document.getElementById("kpi-dominios"),
+        dominiosAlerta: document.getElementById("dominios-alerta"),
         navTabs: Array.from(document.querySelectorAll(".nav-tab")),
         tabPanels: Array.from(document.querySelectorAll(".tab-panel")),
         lista: document.getElementById("clientes-lista"),
@@ -91,6 +92,66 @@ window.addEventListener("DOMContentLoaded", function () {
             return "Nao informado";
         }
         return new Intl.DateTimeFormat("pt-BR").format(data);
+    };
+
+    const diasParaVencerDominio = function (isoDate) {
+        if (!isoDate) {
+            return null;
+        }
+
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
+        const vencimento = new Date(isoDate + "T00:00:00");
+        if (Number.isNaN(vencimento.getTime())) {
+            return null;
+        }
+
+        const diffMs = vencimento.getTime() - hoje.getTime();
+        return Math.ceil(diffMs / 86400000);
+    };
+
+    const obterClientesComDominioProximo = function () {
+        return clientes
+            .map(function (cliente) {
+                return {
+                    cliente: cliente,
+                    diasRestantes: diasParaVencerDominio(cliente.dataVencimentoDominio)
+                };
+            })
+            .filter(function (item) {
+                return item.diasRestantes !== null && item.diasRestantes >= 0 && item.diasRestantes <= 10;
+            })
+            .sort(function (a, b) {
+                return a.diasRestantes - b.diasRestantes;
+            });
+    };
+
+    const renderAlertasDominio = function () {
+        if (!elementos.dominiosAlerta) {
+            return;
+        }
+
+        const alertas = obterClientesComDominioProximo();
+        if (alertas.length === 0) {
+            elementos.dominiosAlerta.classList.add("empty");
+            elementos.dominiosAlerta.innerHTML = "";
+            return;
+        }
+
+        const itens = alertas.map(function (item) {
+            const cliente = item.cliente;
+            const dias = item.diasRestantes;
+            const labelDias = dias === 0 ? "vence hoje" : "vence em " + dias + " dia" + (dias === 1 ? "" : "s");
+            return "<li><strong>" + cliente.nome + "</strong> (" + cliente.dominioAplicacao + "): " + labelDias + "</li>";
+        }).join("");
+
+        elementos.dominiosAlerta.classList.remove("empty");
+        elementos.dominiosAlerta.innerHTML = ""
+            + "<div class=\"dominios-alerta-box\">"
+            + "<h4>Atencao: dominios vencendo nos proximos 10 dias</h4>"
+            + "<ul>" + itens + "</ul>"
+            + "</div>";
     };
 
     const normalizarCliente = function (cliente) {
@@ -406,6 +467,7 @@ window.addEventListener("DOMContentLoaded", function () {
         atualizarModoCadastro();
         await carregarClientesBackend();
         atualizarKpis();
+        renderAlertasDominio();
         renderLista();
         renderDetalhe(null);
         elementos.reciboPreview.innerHTML = "<p>O recibo sera preenchido automaticamente com os dados do cliente selecionado.</p>";
@@ -478,11 +540,17 @@ window.addEventListener("DOMContentLoaded", function () {
         }
 
         clientes.forEach(function (cliente) {
+            const diasRestantes = diasParaVencerDominio(cliente.dataVencimentoDominio);
+            const proximoDeVencer = diasRestantes !== null && diasRestantes >= 0 && diasRestantes <= 10;
+            const seloAlerta = proximoDeVencer
+                ? "<span class=\"alerta-selo\">Vence em " + diasRestantes + " dia" + (diasRestantes === 1 ? "" : "s") + "</span>"
+                : "";
+
             const item = document.createElement("li");
             item.className = "cliente-item";
             item.dataset.id = cliente.id;
             item.innerHTML = ""
-                + "<h4>" + cliente.nome + "</h4>"
+                + "<div class=\"cliente-topo\"><h4>" + cliente.nome + "</h4>" + seloAlerta + "</div>"
                 + "<p>Contato: " + cliente.contato + "</p>"
                 + "<p>Dominio: " + cliente.dominioAplicacao + "</p>"
                 + "<p>Mensalidade: " + formatarMoeda(cliente.valorMensal) + "</p>";
@@ -566,6 +634,7 @@ window.addEventListener("DOMContentLoaded", function () {
         atualizarModoCadastro();
 
         atualizarKpis();
+        renderAlertasDominio();
         renderLista();
         setCadastroFeedback(editando ? "Cliente atualizado com sucesso." : "Cliente cadastrado com sucesso.", false);
         ativarAba("tab-cadastro");
@@ -661,6 +730,7 @@ window.addEventListener("DOMContentLoaded", function () {
         }
 
         atualizarKpis();
+        renderAlertasDominio();
         renderLista();
         renderDetalhe(null);
         atualizarModoCadastro();

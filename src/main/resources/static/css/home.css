@@ -212,6 +212,54 @@ body.dashboard-page {
     gap: 8px;
 }
 
+.dashboard-page .dominios-alerta {
+    margin-bottom: 12px;
+}
+
+.dashboard-page .dominios-alerta.empty {
+    display: none;
+}
+
+.dashboard-page .dominios-alerta-box {
+    border: 1px solid #f59e0b;
+    background: #fffbeb;
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+
+.dashboard-page .dominios-alerta-box h4 {
+    margin: 0 0 6px;
+    color: #92400e;
+    font-size: 14px;
+}
+
+.dashboard-page .dominios-alerta-box ul {
+    margin: 0;
+    padding-left: 18px;
+    color: #78350f;
+    font-size: 13px;
+}
+
+.dashboard-page .cliente-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.dashboard-page .alerta-selo {
+    border-radius: 999px;
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    color: #92400e;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    padding: 3px 8px;
+    white-space: nowrap;
+}
+
 .dashboard-page .cliente-item {
     border: 1px solid var(--line);
     background: #f8fafc;
