@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <meta name="app-context-path" content="/" th:content="@{/}">
     <title>Dashboard | Gestão</title>
     <link rel="stylesheet" href="/css/app.css" th:href="@{/css/app.css}">
 </head>
@@ -272,6 +273,6 @@
     </dialog>
 </div>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script defer src="/js/dashboard.js?v=16" th:src="@{/js/dashboard.js(v=16)}"></script>
+<script defer src="/js/dashboard.js?v=17" th:src="@{/js/dashboard.js(v=17)}"></script>
 </body>
 </html>

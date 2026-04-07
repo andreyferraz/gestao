@@ -3,6 +3,27 @@ window.addEventListener("DOMContentLoaded", function () {
     const leads = [];
     const chamados = [];
     const CHAVE_ABA_ATIVA = "gestao.dashboard.abaAtiva";
+    const contextoMeta = document.querySelector('meta[name="app-context-path"]');
+    const contextoAplicacao = (contextoMeta ? contextoMeta.getAttribute("content") : "") || "";
+    const contextoNormalizado = contextoAplicacao === "/"
+        ? ""
+        : contextoAplicacao.replace(/\/$/, "");
+
+    const montarUrlAplicacao = function (url) {
+        if (!url) {
+            return contextoNormalizado || "/";
+        }
+
+        if (/^https?:\/\//i.test(url)) {
+            return url;
+        }
+
+        if (url.startsWith("/")) {
+            return contextoNormalizado + url;
+        }
+
+        return url;
+    };
 
     const elementos = {
         kpiClientes: document.getElementById("kpi-clientes"),
@@ -440,7 +461,7 @@ window.addEventListener("DOMContentLoaded", function () {
     };
 
     const buscarJson = async function (url) {
-        const response = await fetch(url, {
+        const response = await fetch(montarUrlAplicacao(url), {
             method: "GET",
             headers: {
                 Accept: "application/json"
@@ -882,7 +903,7 @@ window.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        const response = await fetch("/clientes/" + encodeURIComponent(clienteSelecionado.id), {
+        const response = await fetch(montarUrlAplicacao("/clientes/" + encodeURIComponent(clienteSelecionado.id)), {
             method: "DELETE",
             headers: obterHeadersComCsrf({
                 Accept: "application/json"
@@ -1027,7 +1048,7 @@ window.addEventListener("DOMContentLoaded", function () {
             status: "ABERTO"
         };
 
-        const response = await fetch("/chamados", {
+        const response = await fetch(montarUrlAplicacao("/chamados"), {
             method: "POST",
             headers: obterHeadersComCsrf({
                 "Content-Type": "application/json",
@@ -1053,7 +1074,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
     const atualizarStatusChamado = async function (chamadoId, status) {
         const response = await fetch(
-            "/chamados/" + encodeURIComponent(chamadoId) + "/status?status=" + encodeURIComponent(status),
+            montarUrlAplicacao("/chamados/" + encodeURIComponent(chamadoId) + "/status?status=" + encodeURIComponent(status)),
             {
                 method: "PUT",
                 headers: obterHeadersComCsrf({
@@ -1091,7 +1112,7 @@ window.addEventListener("DOMContentLoaded", function () {
         }
 
         const response = await fetch(
-            "/chamados/" + encodeURIComponent(chamadoId) + "/descricao",
+            montarUrlAplicacao("/chamados/" + encodeURIComponent(chamadoId) + "/descricao"),
             {
                 method: "PUT",
                 headers: obterHeadersComCsrf({
@@ -1152,7 +1173,7 @@ window.addEventListener("DOMContentLoaded", function () {
             : "/leads";
         const metodo = editando ? "PUT" : "POST";
 
-        const response = await fetch(url, {
+        const response = await fetch(montarUrlAplicacao(url), {
             method: metodo,
             headers: obterHeadersComCsrf({
                 "Content-Type": "application/json",
@@ -1207,7 +1228,7 @@ window.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        const response = await fetch("/leads/" + encodeURIComponent(leadSelecionado.id), {
+        const response = await fetch(montarUrlAplicacao("/leads/" + encodeURIComponent(leadSelecionado.id)), {
             method: "DELETE",
             headers: obterHeadersComCsrf({
                 Accept: "application/json"
@@ -1315,7 +1336,7 @@ window.addEventListener("DOMContentLoaded", function () {
             : "/clientes";
         const metodo = editando ? "PUT" : "POST";
 
-        const response = await fetch(url, {
+        const response = await fetch(montarUrlAplicacao(url), {
             method: metodo,
             headers: obterHeadersComCsrf({
                 "Content-Type": "application/json",
