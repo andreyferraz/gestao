@@ -43,6 +43,21 @@ public class ClienteSchemaInitializer {
 						+ "AND trim(data_vencimento_dominio) NOT GLOB '*[^0-9]*' "
 						+ "AND length(trim(data_vencimento_dominio)) IN (10, 13)");
 
+		// Convert legacy Brazilian date format (dd/MM/yyyy) to ISO yyyy-MM-dd.
+		jdbcTemplate.execute(
+				"UPDATE cliente "
+						+ "SET data_vencimento_dominio = substr(trim(data_vencimento_dominio), 7, 4) || '-' || substr(trim(data_vencimento_dominio), 4, 2) || '-' || substr(trim(data_vencimento_dominio), 1, 2) "
+						+ "WHERE data_vencimento_dominio IS NOT NULL "
+						+ "AND trim(data_vencimento_dominio) LIKE '__/__/____'");
+
+		// Prevent mapping failures by nulling out unsupported date formats.
+		jdbcTemplate.execute(
+				"UPDATE cliente "
+						+ "SET data_vencimento_dominio = NULL "
+						+ "WHERE data_vencimento_dominio IS NOT NULL "
+						+ "AND trim(data_vencimento_dominio) <> '' "
+						+ "AND trim(data_vencimento_dominio) NOT GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'");
+
 		// Normalize legacy boolean-like values to SQLite integer convention 0/1.
 		jdbcTemplate.execute(
 				"UPDATE cliente "
