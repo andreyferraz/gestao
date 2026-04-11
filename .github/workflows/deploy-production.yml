@@ -1,0 +1,86 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build JAR with Maven Wrapper
+        run: ./mvnw -B clean package
+
+      - name: Find generated JAR
+        id: jar
+        shell: bash
+        run: |
+          JAR_PATH=$(ls target/*.jar | grep -v 'original' | head -n 1)
+          if [ -z "$JAR_PATH" ]; then
+            echo "Nenhum JAR encontrado em target/."
+            exit 1
+          fi
+          echo "path=$JAR_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload JAR to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          source: ${{ steps.jar.outputs.path }},deploy/deploy-vps.sh
+          target: /tmp/gestao-deploy
+          overwrite: true
+
+      - name: Run remote deploy script
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          APP_DIR: ${{ secrets.VPS_APP_DIR }}
+          JAVA_CMD: ${{ secrets.VPS_JAVA_CMD }}
+          JAR_FILE: /tmp/gestao-deploy/${{ steps.jar.outputs.path }}
+          APP_JAR_NAME: gestao.jar
+          APP_LOG_FILE: app.log
+          APP_PID_FILE: app.pid
+          JVM_OPTS: ${{ secrets.VPS_JVM_OPTS }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          envs: APP_DIR,JAVA_CMD,JAR_FILE,APP_JAR_NAME,APP_LOG_FILE,APP_PID_FILE,JVM_OPTS
+          script: |
+            set -euo pipefail
+
+            if [ -z "${APP_DIR:-}" ]; then
+              echo "Secret VPS_APP_DIR nao definido."
+              exit 1
+            fi
+
+            if [ -z "${JAVA_CMD:-}" ]; then
+              JAVA_CMD=java
+            fi
+
+            if [ -z "${JAR_FILE:-}" ] || [ ! -f "$JAR_FILE" ]; then
+              echo "JAR copiado nao encontrado em: $JAR_FILE"
+              exit 1
+            fi
+
+            chmod +x /tmp/gestao-deploy/deploy/deploy-vps.sh
+            /tmp/gestao-deploy/deploy/deploy-vps.sh
