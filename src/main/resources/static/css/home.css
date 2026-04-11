@@ -709,6 +709,35 @@ body.dashboard-page {
     cursor: not-allowed;
 }
 
+/* Inline lead action buttons should match the existing action buttons style */
+.dashboard-page .lead-editar-inline {
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0369a1, #0f766e);
+    color: #ffffff;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.dashboard-page .lead-excluir-inline {
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #b91c1c, #dc2626);
+    color: #ffffff;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.dashboard-page .lead-editar-inline:disabled,
+.dashboard-page .lead-excluir-inline:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 .dashboard-page .chamado-form {
     display: grid;
     gap: 8px;
