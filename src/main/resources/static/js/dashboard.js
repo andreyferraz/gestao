@@ -70,9 +70,9 @@ window.addEventListener("DOMContentLoaded", function () {
         leadsLista: document.getElementById("leads-lista"),
         leadFeedback: document.getElementById("lead-feedback"),
         leadModo: document.getElementById("lead-modo"),
-        leadDetalhe: document.getElementById("lead-detalhe"),
-        leadEditarButton: document.getElementById("lead-editar"),
-        leadExcluirButton: document.getElementById("lead-excluir")
+        leadDetalhe: null,
+        leadEditarButton: null,
+        leadExcluirButton: null
         , chamadoForm: document.getElementById("chamado-form")
         , chamadoClienteSelect: document.getElementById("chamado-cliente")
         , chamadoDescricaoInput: document.getElementById("chamado-descricao")
@@ -363,14 +363,15 @@ window.addEventListener("DOMContentLoaded", function () {
         }
     };
 
-    const renderDetalheLead = function (lead) {
-        if (!elementos.leadDetalhe) {
+    const renderDetalheLead = function (lead, container) {
+        const target = container || elementos.leadDetalhe;
+        if (!target) {
             return;
         }
 
         if (!lead) {
-            elementos.leadDetalhe.classList.add("empty");
-            elementos.leadDetalhe.innerHTML = "<p>Selecione um lead para ver os detalhes.</p>";
+            target.classList.add("empty");
+            target.innerHTML = "<p>Selecione um lead para ver os detalhes.</p>";
             if (elementos.leadEditarButton) {
                 elementos.leadEditarButton.disabled = true;
             }
@@ -380,8 +381,8 @@ window.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        elementos.leadDetalhe.classList.remove("empty");
-        elementos.leadDetalhe.innerHTML = ""
+        target.classList.remove("empty");
+        target.innerHTML = ""
             + "<dl>"
             + "<dt>Nome</dt><dd>" + lead.nome + "</dd>"
             + "<dt>Telefone</dt><dd>" + lead.telefone + "</dd>"
@@ -396,6 +397,88 @@ window.addEventListener("DOMContentLoaded", function () {
         if (elementos.leadExcluirButton) {
             elementos.leadExcluirButton.disabled = false;
         }
+
+        // Add inline action buttons inside the detail container when provided
+        if (target && lead) {
+            const actions = document.createElement("div");
+            actions.className = "lead-actions";
+
+            const btnEditar = document.createElement("button");
+            btnEditar.type = "button";
+            btnEditar.className = "lead-editar-inline";
+            btnEditar.textContent = "Editar lead";
+            btnEditar.addEventListener("click", function (ev) {
+                ev.stopPropagation();
+                editarLeadById(lead);
+            });
+
+            const btnExcluir = document.createElement("button");
+            btnExcluir.type = "button";
+            btnExcluir.className = "lead-excluir-inline";
+            btnExcluir.textContent = "Excluir lead";
+            btnExcluir.addEventListener("click", async function (ev) {
+                ev.stopPropagation();
+                try {
+                    await excluirLeadById(lead.id);
+                } catch (error) {
+                    const mensagem = error instanceof Error && error.message ? error.message : "Nao foi possivel excluir lead agora.";
+                    setLeadFeedback(mensagem, true);
+                }
+            });
+
+            actions.appendChild(btnEditar);
+            actions.appendChild(btnExcluir);
+
+            // remove any previous actions node to avoid duplicates
+            const prev = target.querySelector(".lead-actions");
+            if (prev) {
+                prev.remove();
+            }
+            target.appendChild(actions);
+        }
+    };
+
+    const editarLeadById = function (lead) {
+        if (!lead) return;
+        leadEmEdicaoId = lead.id;
+        preencherFormularioComLead(lead);
+        atualizarModoLead();
+        setLeadFeedback("Edite os campos e clique em Atualizar Lead.", false);
+        if (elementos.leadNomeInput) elementos.leadNomeInput.focus();
+    };
+
+    const excluirLeadById = async function (id) {
+        if (!id) return;
+        const confirmar = window.confirm("Deseja realmente excluir este lead?");
+        if (!confirmar) return;
+
+        const response = await fetch(montarUrlAplicacao("/leads/" + encodeURIComponent(id)), {
+            method: "DELETE",
+            headers: obterHeadersComCsrf({ Accept: "application/json" })
+        });
+
+        if (!response.ok) {
+            const mensagemErro = await obterMensagemErroApi(response, "Falha ao excluir lead");
+            throw new Error(mensagemErro);
+        }
+
+        const idExcluido = id;
+        if (leadSelecionado && leadSelecionado.id === idExcluido) {
+            leadSelecionado = null;
+            leadEmEdicaoId = null;
+        }
+
+        const leadsRestantes = leads.filter(function (lead) {
+            return lead.id !== idExcluido;
+        });
+        leads.splice(0, leads.length, ...leadsRestantes);
+
+        renderLeads();
+        renderLeads();
+        if (elementos.leadForm) {
+            elementos.leadForm.reset();
+        }
+        setLeadFeedback("Lead excluido com sucesso.", false);
     };
 
     const setCadastroFeedback = function (mensagem, erro) {
@@ -931,7 +1014,6 @@ window.addEventListener("DOMContentLoaded", function () {
         if (!elementos.leadsLista) {
             return;
         }
-
         elementos.leadsLista.innerHTML = "";
 
         if (leads.length === 0) {
@@ -947,16 +1029,29 @@ window.addEventListener("DOMContentLoaded", function () {
                 + "<h4>" + lead.nome + "</h4>"
                 + "<p><strong>Telefone:</strong> " + lead.telefone + "</p>"
                 + "<p><strong>Desenvolvimento:</strong> " + formatarMoeda(lead.orcamentoDesenvolvimento)
-                + " | <strong>Manutencao/Hospedagem:</strong> " + formatarMoeda(lead.orcamentoManutencaoHospedagem) + "</p>"
-                + "<p><strong>Observacoes:</strong> " + (lead.observacoes || "Sem observacoes") + "</p>";
-
+                + " | <strong>Manutencao/Hospedagem:</strong> " + formatarMoeda(lead.orcamentoManutencaoHospedagem) + "</p>";
             item.addEventListener("click", function () {
+                // select this lead and re-render so the detalhe appears below it
                 leadSelecionado = lead;
                 renderLeads();
-                renderDetalheLead(leadSelecionado);
+                // focus on the detail after render
+                const next = elementos.leadsLista.querySelector("li[data-id='" + lead.id + "'] + .lead-detalhe");
+                if (next) {
+                    next.setAttribute("aria-hidden", "false");
+                    next.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                }
             });
 
             elementos.leadsLista.appendChild(item);
+
+            // append detalhe only for the selected lead
+            if (leadSelecionado && leadSelecionado.id === lead.id) {
+                const detalheInline = document.createElement("div");
+                detalheInline.className = "lead-detalhe";
+                detalheInline.setAttribute("aria-hidden", "false");
+                renderDetalheLead(leadSelecionado, detalheInline);
+                elementos.leadsLista.appendChild(detalheInline);
+            }
         });
     };
 
@@ -1210,7 +1305,7 @@ window.addEventListener("DOMContentLoaded", function () {
         atualizarModoLead();
 
         renderLeads();
-        renderDetalheLead(leadSelecionado);
+        renderLeads();
         setLeadFeedback(editando ? "Lead atualizado com sucesso." : "Lead salvo com sucesso.", false);
 
         if (elementos.leadForm) {
@@ -1251,7 +1346,7 @@ window.addEventListener("DOMContentLoaded", function () {
         leads.splice(0, leads.length, ...leadsRestantes);
 
         renderLeads();
-        renderDetalheLead(null);
+        renderLeads();
         if (elementos.leadForm) {
             elementos.leadForm.reset();
         }
@@ -1579,7 +1674,7 @@ window.addEventListener("DOMContentLoaded", function () {
         renderAlertasDominio();
         renderLista();
         renderDetalhe(null);
-        renderDetalheLead(null);
+        renderLeads();
         atualizarModoCadastro();
         atualizarModoLead();
         atualizarContadorChamadosAbertos();
