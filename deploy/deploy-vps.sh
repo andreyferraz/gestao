@@ -3,11 +3,23 @@ set -euo pipefail
 
 APP_DIR="${APP_DIR:?APP_DIR nao definido}"
 JAVA_CMD="${JAVA_CMD:-java}"
-APP_JAR_NAME="${APP_JAR_NAME:-gestao.jar}"
 APP_LOG_FILE="${APP_LOG_FILE:-app.log}"
 APP_PID_FILE="${APP_PID_FILE:-app.pid}"
-JAR_FILE="${JAR_FILE:?JAR_FILE nao definido}"
 JVM_OPTS="${JVM_OPTS:-}"
+
+# If JAR_FILE not provided, pick newest JAR from target/ (typical local build)
+if [ -z "${JAR_FILE:-}" ]; then
+  if compgen -G "target/*.jar" > /dev/null; then
+    JAR_FILE=$(ls -t target/*.jar | head -n1)
+    echo "JAR_FILE nao definido; usando: $JAR_FILE"
+  else
+    echo "Erro: JAR_FILE nao definido e nenhum JAR em target/ encontrado." >&2
+    exit 1
+  fi
+fi
+
+# Default target filename on server: use basename of the selected JAR unless overridden
+APP_JAR_NAME="${APP_JAR_NAME:-$(basename "$JAR_FILE")}"
 
 mkdir -p "$APP_DIR"
 TARGET_JAR="$APP_DIR/$APP_JAR_NAME"
