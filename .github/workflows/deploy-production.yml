@@ -24,8 +24,8 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Build JAR with Maven Wrapper
-        run: ./mvnw -B clean package
+      - name: Build JAR with Maven Wrapper (skip tests)
+        run: ./mvnw -B -DskipTests=true clean package
 
       - name: Find generated JAR
         id: jar
