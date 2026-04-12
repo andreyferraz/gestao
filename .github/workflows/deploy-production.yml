@@ -41,27 +41,48 @@ jobs:
           fi
           echo "path=$JAR_PATH" >> "$GITHUB_OUTPUT"
 
-      - name: Validate VPS SSH key secret
+      - name: Prepare SSH key (support plain or base64)
         shell: bash
         env:
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          GITHUB_WORKSPACE: ${{ github.workspace }}
         run: |
+          set -euo pipefail
           if [ -z "${VPS_SSH_KEY:-}" ]; then
             echo "Secret VPS_SSH_KEY não definido ou vazio." >&2
             exit 1
           fi
-          if ! printf '%s' "$VPS_SSH_KEY" | grep -Eq "BEGIN .*PRIVATE KEY"; then
-            echo "VPS_SSH_KEY não parece ser uma chave privada válida (header ausente)." >&2
-            exit 1
+
+          KEY_PATH="$GITHUB_WORKSPACE/deploy_ssh_key"
+
+          # If it already contains a PEM header, write directly
+          if printf '%s' "$VPS_SSH_KEY" | grep -Eq "BEGIN .*PRIVATE KEY"; then
+            printf '%s' "$VPS_SSH_KEY" > "$KEY_PATH"
+          else
+            # try base64 decode
+            set +e
+            printf '%s' "$VPS_SSH_KEY" | base64 --decode > "$KEY_PATH" 2>/dev/null
+            DECODE_STATUS=$?
+            set -e
+            if [ "$DECODE_STATUS" -ne 0 ]; then
+              echo "VPS_SSH_KEY não é um PEM válido nem Base64 decodificável." >&2
+              exit 1
+            fi
+            if ! grep -Eq "BEGIN .*PRIVATE KEY" "$KEY_PATH"; then
+              echo "Chave decodificada não contém header 'BEGIN ... PRIVATE KEY'." >&2
+              exit 1
+            fi
           fi
-          echo "VPS_SSH_KEY validado (header presente)."
+
+          chmod 600 "$KEY_PATH"
+          echo "SSH key escrita em: $KEY_PATH"
 
       - name: Upload JAR to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          key_path: ${{ github.workspace }}/deploy_ssh_key
           port: ${{ secrets.VPS_PORT || 22 }}
           source: ${{ steps.jar.outputs.path }},deploy/deploy-vps.sh
           target: /tmp/gestao-deploy
@@ -80,7 +101,7 @@ jobs:
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          key_path: ${{ github.workspace }}/deploy_ssh_key
           port: ${{ secrets.VPS_PORT || 22 }}
           envs: APP_DIR,JAVA_CMD,JAR_FILE,APP_JAR_NAME,APP_LOG_FILE,APP_PID_FILE,JVM_OPTS
           script: |
