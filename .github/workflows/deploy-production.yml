@@ -41,6 +41,21 @@ jobs:
           fi
           echo "path=$JAR_PATH" >> "$GITHUB_OUTPUT"
 
+      - name: Validate VPS SSH key secret
+        shell: bash
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          if [ -z "${VPS_SSH_KEY:-}" ]; then
+            echo "Secret VPS_SSH_KEY não definido ou vazio." >&2
+            exit 1
+          fi
+          if ! printf '%s' "$VPS_SSH_KEY" | grep -Eq "BEGIN .*PRIVATE KEY"; then
+            echo "VPS_SSH_KEY não parece ser uma chave privada válida (header ausente)." >&2
+            exit 1
+          fi
+          echo "VPS_SSH_KEY validado (header presente)."
+
       - name: Upload JAR to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
