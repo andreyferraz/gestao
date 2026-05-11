@@ -1,12 +1,12 @@
 package com.andreyferraz.gestao.module.cliente;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,7 +14,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -48,22 +47,15 @@ class ClienteServiceTest {
         input.setAtivo(1);
         input.setVendedorId(null);
 
-        UUID generatedId = UUID.randomUUID();
-        var returned = new Cliente();
-        returned.setId(generatedId);
-        returned.setNome(input.getNome());
-        returned.setContato(input.getContato());
-        returned.setDominioAplicacao(input.getDominioAplicacao());
-        returned.setDataVencimentoDominio(input.getDataVencimentoDominio());
-        returned.setValorMensal(input.getValorMensal());
-        returned.setAtivo(input.getAtivo());
-        returned.setVendedorId(null);
-
-        when(clienteRepository.findById(any(UUID.class))).thenReturn(Optional.of(returned));
-
         var result = clienteService.criar(input);
 
-        assertEquals(returned, result);
+        assertNotNull(result.getId());
+        assertEquals(input.getNome(), result.getNome());
+        assertEquals(input.getContato(), result.getContato());
+        assertEquals(input.getDominioAplicacao(), result.getDominioAplicacao());
+        assertEquals(input.getDataVencimentoDominio(), result.getDataVencimentoDominio());
+        assertEquals(input.getValorMensal(), result.getValorMensal());
+        assertEquals(input.getAtivo(), result.getAtivo());
         verify(clienteRepository).inserir(any(UUID.class), eq("Nome"), eq("contato"), eq("dominio"), eq(LocalDate.of(2026, 1, 1)), eq(BigDecimal.valueOf(100)), eq(1), isNull());
     }
 
@@ -77,8 +69,6 @@ class ClienteServiceTest {
         input.setValorMensal(null);
         input.setAtivo(null);
         input.setVendedorId(null);
-
-        doThrow(new RuntimeException("falha de leitura")).when(clienteRepository).findById(any(UUID.class));
 
         var result = clienteService.criar(input);
 
