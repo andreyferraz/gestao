@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -45,6 +46,20 @@ class ClienteServiceTest {
 
         assertEquals(returned, result);
         verify(clienteRepository).inserir(any(UUID.class), eq("Nome"), eq("contato"), eq("dominio"), eq(LocalDate.of(2026, 1, 1)), eq(BigDecimal.valueOf(100)), eq(1));
+    }
+
+    @Test
+    void criar_quandoReleituraFalhar_deveRetornarClientePersistido() {
+        var input = new Cliente(null, "Nome", "contato", "dominio", LocalDate.of(2026, 1, 1), null, null);
+
+        doNothing().when(clienteRepository).inserir(any(UUID.class), anyString(), anyString(), anyString(), any(LocalDate.class), any(BigDecimal.class), any(Integer.class));
+        doThrow(new RuntimeException("falha de leitura")).when(clienteRepository).findById(any(UUID.class));
+
+        var result = clienteService.criar(input);
+
+        assertEquals(input.getId(), result.getId());
+        assertEquals(BigDecimal.ZERO, result.getValorMensal());
+        assertEquals(0, result.getAtivo());
     }
 
     @Test
