@@ -31,6 +31,10 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
                 <span>Novo Cliente</span>
             </button>
+            <button type="button" class="nav-tab" data-tab-target="tab-vendedores">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M7 20V8l5-3 5 3v12"/><path d="M10 20v-5h4v5"/></svg>
+                <span>Vendedores</span>
+            </button>
             <button type="button" class="nav-tab" data-tab-target="tab-relatorios">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h5"/></svg>
                 <span>Relatórios</span>
@@ -133,6 +137,11 @@
                     <label for="novo-valor">Valor mensal (R$)</label>
                     <input id="novo-valor" type="number" min="0" step="0.01" placeholder="250.00" required>
 
+                    <label for="novo-vendedor">Vendedor responsável (opcional)</label>
+                    <select id="novo-vendedor">
+                        <option value="">Sem vendedor</option>
+                    </select>
+
                     <label for="novo-ativo">Ativo</label>
                     <select id="novo-ativo">
                         <option value="true" selected>Sim</option>
@@ -143,6 +152,37 @@
                 </form>
                 <small id="cadastro-modo" class="obs">Modo atual: novo cadastro.</small>
                 <small id="cadastro-feedback" class="obs">* Preencha os dados para criar um cliente no sistema.</small>
+            </article>
+
+            <article id="tab-vendedores" class="panel tab-panel">
+                <div class="panel-head">
+                    <h3>Vendedores</h3>
+                    <span class="chip">Comissão</span>
+                </div>
+                <p class="panel-sub">Cadastre vendedores e acompanhe quando a comissão de 20% estiver liberada.</p>
+
+                <form id="vendedor-form" class="lead-form" action="#" method="post" onsubmit="return false;">
+                    <label for="vendedor-nome">Nome</label>
+                    <input id="vendedor-nome" type="text" placeholder="Ex.: Ana Silva" required>
+
+                    <label for="vendedor-telefone">Telefone</label>
+                    <input id="vendedor-telefone" type="tel" placeholder="(11) 99876-5432" required>
+
+                    <label for="vendedor-email">E-mail</label>
+                    <input id="vendedor-email" type="email" placeholder="ana@empresa.com">
+
+                    <label for="vendedor-ativo">Ativo</label>
+                    <select id="vendedor-ativo">
+                        <option value="true" selected>Sim</option>
+                        <option value="false">Nao</option>
+                    </select>
+
+                    <button id="vendedor-salvar" type="submit">Salvar Vendedor</button>
+                </form>
+                <small id="vendedor-modo" class="obs">Modo atual: novo vendedor.</small>
+                <small id="vendedor-feedback" class="obs">* Cadastre vendedores para vinculá-los aos clientes.</small>
+
+                <ul id="vendedores-lista" class="leads-lista" aria-label="Lista de vendedores cadastrados"></ul>
             </article>
 
             <article id="tab-relatorios" class="panel tab-panel">

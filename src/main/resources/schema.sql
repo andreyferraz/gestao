@@ -1,3 +1,11 @@
+CREATE TABLE IF NOT EXISTS vendedor (
+	id TEXT PRIMARY KEY,
+	nome TEXT NOT NULL,
+	telefone TEXT NOT NULL,
+	email TEXT,
+	ativo INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1))
+);
+
 CREATE TABLE IF NOT EXISTS cliente (
 	id TEXT PRIMARY KEY,
 	nome TEXT NOT NULL,
@@ -5,7 +13,9 @@ CREATE TABLE IF NOT EXISTS cliente (
 	dominio_aplicacao TEXT,
 	data_vencimento_dominio DATE,
 	valor_mensal NUMERIC NOT NULL DEFAULT 0,
-	ativo INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1))
+	ativo INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1)),
+	vendedor_id TEXT,
+	FOREIGN KEY (vendedor_id) REFERENCES vendedor(id)
 );
 
 CREATE TABLE IF NOT EXISTS movimentacao (

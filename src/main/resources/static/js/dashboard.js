@@ -2,6 +2,7 @@ window.addEventListener("DOMContentLoaded", function () {
     const clientes = [];
     const leads = [];
     const chamados = [];
+    const vendedores = [];
     const CHAVE_ABA_ATIVA = "gestao.dashboard.abaAtiva";
     const contextoMeta = document.querySelector('meta[name="app-context-path"]');
     const contextoAplicacao = (contextoMeta ? contextoMeta.getAttribute("content") : "") || "";
@@ -57,9 +58,19 @@ window.addEventListener("DOMContentLoaded", function () {
         novoDominioInput: document.getElementById("novo-dominio"),
         novoVencimentoInput: document.getElementById("novo-vencimento"),
         novoValorInput: document.getElementById("novo-valor"),
+        novoVendedorSelect: document.getElementById("novo-vendedor"),
         novoAtivoInput: document.getElementById("novo-ativo"),
         cadastroModo: document.getElementById("cadastro-modo"),
         salvarClienteButton: document.getElementById("salvar-cliente"),
+        vendedorForm: document.getElementById("vendedor-form"),
+        vendedorNomeInput: document.getElementById("vendedor-nome"),
+        vendedorTelefoneInput: document.getElementById("vendedor-telefone"),
+        vendedorEmailInput: document.getElementById("vendedor-email"),
+        vendedorAtivoInput: document.getElementById("vendedor-ativo"),
+        vendedorModo: document.getElementById("vendedor-modo"),
+        vendedorSalvarButton: document.getElementById("vendedor-salvar"),
+        vendedoresLista: document.getElementById("vendedores-lista"),
+        vendedorFeedback: document.getElementById("vendedor-feedback"),
         leadForm: document.getElementById("lead-form"),
         leadNomeInput: document.getElementById("lead-nome"),
         leadTelefoneInput: document.getElementById("lead-telefone"),
@@ -96,6 +107,8 @@ window.addEventListener("DOMContentLoaded", function () {
     let clienteEmEdicaoId = null;
     let leadSelecionado = null;
     let leadEmEdicaoId = null;
+    let vendedorSelecionado = null;
+    let vendedorEmEdicaoId = null;
     let chamadoEmEdicao = null;
 
     const nomesMeses = [
@@ -224,6 +237,8 @@ window.addEventListener("DOMContentLoaded", function () {
             contato: cliente.contato || "Nao informado",
             dominioAplicacao: cliente.dominioAplicacao || "Nao informado",
             dataVencimentoDominio: cliente.dataVencimentoDominio || "",
+            vendedorId: cliente.vendedorId || null,
+            vendedorNome: cliente.vendedorNome || null,
             ativo: ativoNormalizado,
             valorMensal: Number(cliente.valorMensal) || 0
         };
@@ -237,6 +252,20 @@ window.addEventListener("DOMContentLoaded", function () {
             observacoes: lead.observacoes || "",
             orcamentoDesenvolvimento: Number(lead.orcamentoDesenvolvimento) || 0,
             orcamentoManutencaoHospedagem: Number(lead.orcamentoManutencaoHospedagem) || 0
+        };
+    };
+
+    const normalizarVendedor = function (vendedor) {
+        return {
+            id: vendedor.id,
+            nome: vendedor.nome || "Sem nome",
+            telefone: vendedor.telefone || "Nao informado",
+            email: vendedor.email || "Nao informado",
+            ativo: vendedor.ativo === true || vendedor.ativo === 1 || vendedor.ativo === "1",
+            clientesAssociados: Number(vendedor.clientesAssociados) || 0,
+            clientesAtivos: Number(vendedor.clientesAtivos) || 0,
+            aptoComissao: vendedor.aptoComissao === true || vendedor.aptoComissao === 1 || vendedor.aptoComissao === "1",
+            comissaoTotal: Number(vendedor.comissaoTotal) || 0
         };
     };
 
@@ -326,6 +355,24 @@ window.addEventListener("DOMContentLoaded", function () {
         }
     };
 
+    const popularSelectVendedoresCliente = function () {
+        if (!elementos.novoVendedorSelect) {
+            return;
+        }
+
+        const valorAtual = elementos.novoVendedorSelect.value;
+        elementos.novoVendedorSelect.innerHTML = '<option value="">Sem vendedor</option>';
+
+        vendedores.forEach(function (vendedor) {
+            const option = document.createElement("option");
+            option.value = vendedor.id;
+            option.textContent = vendedor.nome;
+            elementos.novoVendedorSelect.appendChild(option);
+        });
+
+        elementos.novoVendedorSelect.value = valorAtual || "";
+    };
+
     const setLeadFeedback = function (mensagem, erro) {
         if (!elementos.leadFeedback) {
             return;
@@ -349,6 +396,29 @@ window.addEventListener("DOMContentLoaded", function () {
         }
     };
 
+    const setVendedorFeedback = function (mensagem, erro) {
+        if (!elementos.vendedorFeedback) {
+            return;
+        }
+
+        elementos.vendedorFeedback.textContent = mensagem;
+        elementos.vendedorFeedback.style.color = erro ? "#b91c1c" : "#0f766e";
+    };
+
+    const atualizarModoVendedor = function () {
+        const emEdicao = Boolean(vendedorEmEdicaoId);
+        if (elementos.vendedorModo) {
+            elementos.vendedorModo.textContent = emEdicao
+                ? "Modo atual: edicao de vendedor."
+                : "Modo atual: novo vendedor.";
+        }
+        if (elementos.vendedorSalvarButton) {
+            elementos.vendedorSalvarButton.textContent = emEdicao
+                ? "Atualizar Vendedor"
+                : "Salvar Vendedor";
+        }
+    };
+
     const preencherFormularioComLead = function (lead) {
         if (!lead || !elementos.leadNomeInput || !elementos.leadTelefoneInput || !elementos.leadOrcDevInput || !elementos.leadOrcManutencaoInput) {
             return;
@@ -361,6 +431,17 @@ window.addEventListener("DOMContentLoaded", function () {
         if (elementos.leadObsInput) {
             elementos.leadObsInput.value = lead.observacoes || "";
         }
+    };
+
+    const preencherFormularioComVendedor = function (vendedor) {
+        if (!vendedor || !elementos.vendedorNomeInput || !elementos.vendedorTelefoneInput || !elementos.vendedorEmailInput || !elementos.vendedorAtivoInput) {
+            return;
+        }
+
+        elementos.vendedorNomeInput.value = vendedor.nome || "";
+        elementos.vendedorTelefoneInput.value = vendedor.telefone || "";
+        elementos.vendedorEmailInput.value = vendedor.email && vendedor.email !== "Nao informado" ? vendedor.email : "";
+        elementos.vendedorAtivoInput.value = vendedor.ativo ? "true" : "false";
     };
 
     const renderDetalheLead = function (lead, container) {
@@ -516,6 +597,9 @@ window.addEventListener("DOMContentLoaded", function () {
         if (elementos.novoValorInput) {
             elementos.novoValorInput.value = String(Number(cliente.valorMensal) || 0);
         }
+        if (elementos.novoVendedorSelect) {
+            elementos.novoVendedorSelect.value = cliente.vendedorId || "";
+        }
         elementos.novoAtivoInput.value = cliente.ativo ? "true" : "false";
     };
 
@@ -621,6 +705,7 @@ window.addEventListener("DOMContentLoaded", function () {
             + "<dt>Contato</dt><dd>" + cliente.contato + "</dd>"
             + "<dt>Dominio</dt><dd>" + cliente.dominioAplicacao + "</dd>"
             + "<dt>Vencimento</dt><dd>" + formatarData(cliente.dataVencimentoDominio) + "</dd>"
+            + "<dt>Vendedor</dt><dd>" + (cliente.vendedorNome || "Sem vendedor") + "</dd>"
             + "<dt>Status</dt><dd>" + (cliente.ativo ? "Ativo" : "Inativo") + "</dd>"
             + "<dt>Valor Mensal</dt><dd>" + formatarMoeda(cliente.valorMensal) + "</dd>"
             + "</dl>";
@@ -1375,6 +1460,7 @@ window.addEventListener("DOMContentLoaded", function () {
                 + "<div class=\"cliente-topo\"><h4>" + cliente.nome + "</h4>" + seloAlerta + "</div>"
                 + "<p>Contato: " + cliente.contato + "</p>"
                 + "<p>Dominio: " + cliente.dominioAplicacao + "</p>"
+                + "<p>Vendedor: " + (cliente.vendedorNome || "Sem vendedor") + "</p>"
                 + "<p>Mensalidade: " + formatarMoeda(cliente.valorMensal) + "</p>";
 
             item.addEventListener("click", async function () {
@@ -1391,6 +1477,112 @@ window.addEventListener("DOMContentLoaded", function () {
         clientes.splice(0, clientes.length, ...lista.map(normalizarCliente));
         popularSelectClientesChamado();
         renderChamados();
+    };
+
+    const renderVendedores = function () {
+        if (!elementos.vendedoresLista) {
+            return;
+        }
+
+        elementos.vendedoresLista.innerHTML = "";
+
+        if (vendedores.length === 0) {
+            elementos.vendedoresLista.innerHTML = "<li class=\"cliente-item\"><p>Nenhum vendedor cadastrado ainda.</p></li>";
+            return;
+        }
+
+        vendedores.forEach(function (vendedor) {
+            const item = document.createElement("li");
+            item.className = "cliente-item";
+            item.dataset.id = vendedor.id;
+            item.innerHTML = ""
+                + "<div class=\"cliente-topo\"><h4>" + vendedor.nome + "</h4>" + (vendedor.aptoComissao ? "<span class=\"alerta-selo\">Apto para comissão</span>" : "") + "</div>"
+                + "<p>Telefone: " + vendedor.telefone + "</p>"
+                + "<p>Email: " + vendedor.email + "</p>"
+                + "<p>Clientes associados: " + vendedor.clientesAssociados + "</p>"
+                + "<p>Clientes ativos: " + vendedor.clientesAtivos + "</p>"
+                + "<p>Comissao: " + (vendedor.aptoComissao ? formatarMoeda(vendedor.comissaoTotal) : "Aguardando 5 clientes") + "</p>";
+
+            item.addEventListener("click", function () {
+                vendedorSelecionado = vendedor;
+                vendedorEmEdicaoId = vendedor.id;
+                preencherFormularioComVendedor(vendedor);
+                atualizarModoVendedor();
+                setVendedorFeedback("Edite os campos e clique em Atualizar Vendedor.", false);
+                ativarAba("tab-vendedores");
+            });
+
+            elementos.vendedoresLista.appendChild(item);
+        });
+    };
+
+    const carregarVendedoresBackend = async function () {
+        const data = await buscarJson("/vendedores/dashboard");
+        const lista = Array.isArray(data) ? data : [];
+        vendedores.splice(0, vendedores.length, ...lista.map(normalizarVendedor));
+        popularSelectVendedoresCliente();
+        renderVendedores();
+    };
+
+    const salvarNovoVendedor = async function () {
+        if (!elementos.vendedorNomeInput || !elementos.vendedorTelefoneInput || !elementos.vendedorEmailInput || !elementos.vendedorAtivoInput) {
+            return;
+        }
+
+        const nome = elementos.vendedorNomeInput.value.trim();
+        const telefone = elementos.vendedorTelefoneInput.value.trim();
+        const email = elementos.vendedorEmailInput.value.trim();
+        const ativo = elementos.vendedorAtivoInput.value === "true";
+
+        if (!nome || !telefone) {
+            setVendedorFeedback("Preencha nome e telefone para salvar.", true);
+            return;
+        }
+
+        const payload = {
+            nome: nome,
+            telefone: telefone,
+            email: email || null,
+            ativo: ativo ? 1 : 0
+        };
+
+        const csrfToken = csrfTokenElement ? csrfTokenElement.getAttribute("content") : "";
+        const csrfHeader = csrfHeaderElement ? csrfHeaderElement.getAttribute("content") : "";
+        if (!csrfToken || !csrfHeader) {
+            throw new Error("Token de seguranca nao encontrado. Atualize a pagina e tente novamente.");
+        }
+
+        const editando = Boolean(vendedorEmEdicaoId);
+        const url = editando
+            ? "/vendedores/" + encodeURIComponent(vendedorEmEdicaoId)
+            : "/vendedores";
+        const metodo = editando ? "PUT" : "POST";
+
+        const response = await fetch(montarUrlAplicacao(url), {
+            method: metodo,
+            headers: obterHeadersComCsrf({
+                "Content-Type": "application/json",
+                Accept: "application/json"
+            }),
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const mensagemErro = await obterMensagemErroApi(response, editando ? "Falha ao atualizar vendedor" : "Falha ao criar vendedor");
+            throw new Error(mensagemErro);
+        }
+
+        await carregarVendedoresBackend();
+
+        if (elementos.vendedorForm) {
+            elementos.vendedorForm.reset();
+        }
+
+        vendedorSelecionado = null;
+        vendedorEmEdicaoId = null;
+        atualizarModoVendedor();
+        setVendedorFeedback(editando ? "Vendedor atualizado com sucesso." : "Vendedor cadastrado com sucesso.", false);
+        ativarAba("tab-vendedores");
     };
 
     const salvarNovoCliente = async function () {
@@ -1416,7 +1608,8 @@ window.addEventListener("DOMContentLoaded", function () {
             dominioAplicacao: dominioAplicacao,
             dataVencimentoDominio: dataVencimentoDominio,
             valorMensal: valorMensal,
-            ativo: ativo ? 1 : 0
+            ativo: ativo ? 1 : 0,
+            vendedorId: elementos.novoVendedorSelect && elementos.novoVendedorSelect.value ? elementos.novoVendedorSelect.value : null
         };
 
         const csrfToken = csrfTokenElement ? csrfTokenElement.getAttribute("content") : "";
@@ -1456,6 +1649,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
         clienteEmEdicaoId = null;
         atualizarModoCadastro();
+        popularSelectVendedoresCliente();
 
         atualizarKpis();
         renderAlertasDominio();
@@ -1600,6 +1794,19 @@ window.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    if (elementos.vendedorForm) {
+        elementos.vendedorForm.addEventListener("submit", async function () {
+            try {
+                await salvarNovoVendedor();
+            } catch (error) {
+                const mensagem = error instanceof Error && error.message
+                    ? error.message
+                    : "Nao foi possivel salvar vendedor agora. Tente novamente.";
+                setVendedorFeedback(mensagem, true);
+            }
+        });
+    }
+
     if (elementos.cadastroForm) {
         elementos.cadastroForm.addEventListener("submit", async function () {
             try {
@@ -1665,6 +1872,12 @@ window.addEventListener("DOMContentLoaded", function () {
 
     const iniciarPainel = async function () {
         try {
+            await carregarVendedoresBackend();
+        } catch (error) {
+            setVendedorFeedback("Nao foi possivel carregar vendedores do backend no momento.", true);
+        }
+
+        try {
             await carregarClientesBackend();
         } catch (error) {
             setCadastroFeedback("Nao foi possivel carregar clientes do backend no momento.", true);
@@ -1676,6 +1889,7 @@ window.addEventListener("DOMContentLoaded", function () {
         renderDetalhe(null);
         renderLeads();
         atualizarModoCadastro();
+        atualizarModoVendedor();
         atualizarModoLead();
         atualizarContadorChamadosAbertos();
         ativarAba(obterAbaInicial());
@@ -1702,6 +1916,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
         renderLeads();
         renderChamados();
+        renderVendedores();
     };
 
     iniciarPainel();

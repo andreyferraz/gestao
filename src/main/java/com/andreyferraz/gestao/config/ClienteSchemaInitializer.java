@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ClienteSchemaInitializer {
 
+	private static final String CLIENTE_TABLE = "cliente";
+
 	private final JdbcTemplate jdbcTemplate;
 
 	@PostConstruct
@@ -23,8 +25,8 @@ public class ClienteSchemaInitializer {
 			return;
 		}
 
-		boolean hasContato = hasColumn("cliente", "contato");
-		boolean hasValorMensal = hasColumn("cliente", "valor_mensal");
+		boolean hasContato = hasColumn(CLIENTE_TABLE, "contato");
+		boolean hasValorMensal = hasColumn(CLIENTE_TABLE, "valor_mensal");
 
 		if (!hasContato) {
 			jdbcTemplate.execute("ALTER TABLE cliente ADD COLUMN contato TEXT");
@@ -32,6 +34,10 @@ public class ClienteSchemaInitializer {
 
 		if (!hasValorMensal) {
 			jdbcTemplate.execute("ALTER TABLE cliente ADD COLUMN valor_mensal NUMERIC NOT NULL DEFAULT 0");
+		}
+
+		if (!hasColumn(CLIENTE_TABLE, "vendedor_id")) {
+			jdbcTemplate.execute("ALTER TABLE cliente ADD COLUMN vendedor_id TEXT");
 		}
 
 		// Convert legacy epoch timestamps (seconds/milliseconds) to ISO date.

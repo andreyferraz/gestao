@@ -36,4 +36,7 @@ public class Cliente {
 
 	private Integer ativo;
 
+	@Column("vendedor_id")
+	private UUID vendedorId;
+
 }
