@@ -23,14 +23,16 @@ public class AdminUserInitializer {
 			}
 
 			String hashedPassword = passwordEncoder.encode(adminPassword);
-			String upsertAdminSql = "INSERT INTO usuarios (id, username, senha, ativo, role) "
-					+ "VALUES (?, 'admin', ?, 1, 'ADMIN') "
-					+ "ON CONFLICT(username) DO UPDATE SET "
-					+ "senha = excluded.senha, ativo = 1, role = 'ADMIN'";
-			jdbcTemplate.update(
-					upsertAdminSql,
-					UUID.randomUUID().toString(),
+			int updatedRows = jdbcTemplate.update(
+					"UPDATE usuarios SET senha = ?, ativo = 1, role = 'ADMIN' WHERE username = 'admin'",
 					hashedPassword);
+
+			if (updatedRows == 0) {
+				jdbcTemplate.update(
+						"INSERT INTO usuarios (id, username, senha, ativo, role) VALUES (?, 'admin', ?, 1, 'ADMIN')",
+						UUID.randomUUID().toString(),
+						hashedPassword);
+			}
 		};
 	}
 }

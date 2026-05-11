@@ -1,8 +1,10 @@
 package com.andreyferraz.gestao.config;
 
-import java.util.List;
-import java.util.Map;
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
+import java.util.Locale;
 
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -17,11 +19,12 @@ public class ClienteSchemaInitializer {
 
 	@PostConstruct
 	public void ensureContatoColumn() {
-		List<Map<String, Object>> columns = jdbcTemplate.queryForList("PRAGMA table_info(cliente)");
-		boolean hasContato = columns.stream()
-				.anyMatch(column -> "contato".equalsIgnoreCase(String.valueOf(column.get("name"))));
-		boolean hasValorMensal = columns.stream()
-				.anyMatch(column -> "valor_mensal".equalsIgnoreCase(String.valueOf(column.get("name"))));
+		if (!isSqlite()) {
+			return;
+		}
+
+		boolean hasContato = hasColumn("cliente", "contato");
+		boolean hasValorMensal = hasColumn("cliente", "valor_mensal");
 
 		if (!hasContato) {
 			jdbcTemplate.execute("ALTER TABLE cliente ADD COLUMN contato TEXT");
@@ -70,6 +73,26 @@ public class ClienteSchemaInitializer {
 						+ "ELSE 0 "
 						+ "END "
 						+ "WHERE ativo IS NOT NULL");
+	}
+
+	private boolean hasColumn(String tableName, String columnName) {
+		return Boolean.TRUE.equals(jdbcTemplate.execute((ConnectionCallback<Boolean>) connection -> {
+			DatabaseMetaData metaData = connection.getMetaData();
+			try (var resultSet = metaData.getColumns(null, null, tableName, columnName)) {
+				return resultSet.next();
+			}
+		}));
+	}
+
+	private boolean isSqlite() {
+		return Boolean.TRUE.equals(jdbcTemplate.execute((ConnectionCallback<Boolean>) connection -> {
+			try {
+				String productName = connection.getMetaData().getDatabaseProductName();
+				return productName != null && productName.toLowerCase(Locale.ROOT).contains("sqlite");
+			} catch (SQLException ex) {
+				return false;
+			}
+		}));
 	}
 
 }
