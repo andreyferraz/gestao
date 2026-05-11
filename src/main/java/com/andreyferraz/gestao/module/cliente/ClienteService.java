@@ -39,11 +39,7 @@ public class ClienteService {
 				cliente.getAtivo() != null && cliente.getAtivo() == 1 ? 1 : 0,
 				validarVendedor(cliente.getVendedorId()));
 
-		try {
-			return clienteRepository.findById(cliente.getId()).orElse(cliente);
-		} catch (RuntimeException ex) {
-			return cliente;
-		}
+		return cliente;
 	}
 
 	@Transactional(readOnly = true)
@@ -102,11 +98,7 @@ public class ClienteService {
 				clienteAtualizado.getAtivo() != null && clienteAtualizado.getAtivo() == 1 ? 1 : 0,
 				validarVendedor(clienteAtualizado.getVendedorId()));
 
-		try {
-			return clienteRepository.findById(id).orElse(clienteAtualizado);
-		} catch (RuntimeException ex) {
-			return clienteAtualizado;
-		}
+		return clienteAtualizado;
 	}
 
 	@Transactional
