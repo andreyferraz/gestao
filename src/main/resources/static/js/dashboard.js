@@ -603,6 +603,20 @@ window.addEventListener("DOMContentLoaded", function () {
         elementos.novoAtivoInput.value = cliente.ativo ? "true" : "false";
     };
 
+    const abrirClienteParaEdicao = function (cliente) {
+        if (!cliente) {
+            return;
+        }
+
+        clienteSelecionado = cliente;
+        clienteEmEdicaoId = cliente.id;
+        preencherFormularioComCliente(cliente);
+        atualizarModoCadastro();
+        setCadastroFeedback("Edite os campos e clique em Atualizar Cliente.", false);
+        renderDetalhe(cliente);
+        ativarAba("tab-cadastro");
+    };
+
     const setDetalheFeedback = function (mensagem, erro) {
         if (!elementos.detalheFeedback) {
             return;
@@ -1463,6 +1477,31 @@ window.addEventListener("DOMContentLoaded", function () {
                 + "<p>Vendedor: " + (cliente.vendedorNome || "Sem vendedor") + "</p>"
                 + "<p>Mensalidade: " + formatarMoeda(cliente.valorMensal) + "</p>";
 
+            const acoes = document.createElement("div");
+            acoes.className = "cliente-actions";
+
+            const botaoEditar = document.createElement("button");
+            botaoEditar.type = "button";
+            botaoEditar.className = "cliente-editar";
+            botaoEditar.textContent = "Editar";
+            botaoEditar.addEventListener("click", function (event) {
+                event.stopPropagation();
+                abrirClienteParaEdicao(cliente);
+            });
+
+            const botaoDetalhes = document.createElement("button");
+            botaoDetalhes.type = "button";
+            botaoDetalhes.className = "cliente-detalhes";
+            botaoDetalhes.textContent = "Detalhes";
+            botaoDetalhes.addEventListener("click", async function (event) {
+                event.stopPropagation();
+                await selecionarCliente(cliente.id);
+            });
+
+            acoes.appendChild(botaoEditar);
+            acoes.appendChild(botaoDetalhes);
+            item.appendChild(acoes);
+
             item.addEventListener("click", async function () {
                 await selecionarCliente(cliente.id);
             });
@@ -1711,11 +1750,7 @@ window.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            clienteEmEdicaoId = clienteSelecionado.id;
-            preencherFormularioComCliente(clienteSelecionado);
-            atualizarModoCadastro();
-            setCadastroFeedback("Edite os campos e clique em Atualizar Cliente.", false);
-            ativarAba("tab-cadastro");
+            abrirClienteParaEdicao(clienteSelecionado);
         });
     }
 

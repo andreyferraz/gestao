@@ -310,6 +310,31 @@ body.dashboard-page {
     color: var(--muted);
 }
 
+.dashboard-page .cliente-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.dashboard-page .cliente-actions button {
+    border: 0;
+    border-radius: 10px;
+    color: #ffffff;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.dashboard-page .cliente-editar {
+    background: linear-gradient(135deg, #0369a1, #0f766e);
+}
+
+.dashboard-page .cliente-detalhes {
+    background: linear-gradient(135deg, #475569, #64748b);
+}
+
 .dashboard-page .cliente-detalhe {
     border: 1px solid var(--line);
     border-radius: 10px;
