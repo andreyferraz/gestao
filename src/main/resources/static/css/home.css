@@ -310,6 +310,31 @@ body.dashboard-page {
     color: var(--muted);
 }
 
+.dashboard-page .lead-resumo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 10px 0 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #bbf7d0;
+    background: linear-gradient(135deg, #f0fdf4, #ecfeff);
+    color: #14532d;
+}
+
+.dashboard-page .lead-resumo span {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.dashboard-page .lead-resumo strong {
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f766e;
+    white-space: nowrap;
+}
+
 .dashboard-page .cliente-actions {
     display: flex;
     gap: 8px;

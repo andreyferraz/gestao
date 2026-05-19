@@ -78,6 +78,7 @@ window.addEventListener("DOMContentLoaded", function () {
         leadOrcManutencaoInput: document.getElementById("lead-orcamento-manutencao"),
         leadObsInput: document.getElementById("lead-observacoes"),
         leadSalvarButton: document.getElementById("lead-salvar"),
+        leadTotalManutencao: document.getElementById("lead-total-manutencao"),
         leadsLista: document.getElementById("leads-lista"),
         leadFeedback: document.getElementById("lead-feedback"),
         leadModo: document.getElementById("lead-modo"),
@@ -253,6 +254,18 @@ window.addEventListener("DOMContentLoaded", function () {
             orcamentoDesenvolvimento: Number(lead.orcamentoDesenvolvimento) || 0,
             orcamentoManutencaoHospedagem: Number(lead.orcamentoManutencaoHospedagem) || 0
         };
+    };
+
+    const atualizarResumoLeads = function () {
+        if (!elementos.leadTotalManutencao) {
+            return;
+        }
+
+        const totalManutencao = leads.reduce(function (acc, lead) {
+            return acc + (Number(lead.orcamentoManutencaoHospedagem) || 0);
+        }, 0);
+
+        elementos.leadTotalManutencao.textContent = formatarMoeda(totalManutencao);
     };
 
     const normalizarVendedor = function (vendedor) {
@@ -1111,12 +1124,14 @@ window.addEventListener("DOMContentLoaded", function () {
 
     const renderLeads = function () {
         if (!elementos.leadsLista) {
+            atualizarResumoLeads();
             return;
         }
         elementos.leadsLista.innerHTML = "";
 
         if (leads.length === 0) {
             elementos.leadsLista.innerHTML = "<li class=\"lead-item\"><p>Nenhum lead cadastrado ainda.</p></li>";
+            atualizarResumoLeads();
             return;
         }
 
@@ -1152,12 +1167,15 @@ window.addEventListener("DOMContentLoaded", function () {
                 elementos.leadsLista.appendChild(detalheInline);
             }
         });
+
+        atualizarResumoLeads();
     };
 
     const carregarLeadsBackend = async function () {
         const data = await buscarJson("/leads");
         const lista = Array.isArray(data) ? data : [];
         leads.splice(0, leads.length, ...lista.map(normalizarLead));
+        renderLeads();
     };
 
     const carregarChamadosBackend = async function () {
