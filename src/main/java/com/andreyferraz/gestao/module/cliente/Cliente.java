@@ -31,6 +31,9 @@ public class Cliente {
 	@Column("data_vencimento_dominio")
 	private LocalDate dataVencimentoDominio;
 
+	@Column("informacoes_uteis")
+	private String informacoesUteis;
+
 	@Column("valor_mensal")
 	private BigDecimal valorMensal;
 

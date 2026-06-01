@@ -35,6 +35,7 @@ public class ClienteService {
 				cliente.getContato(),
 				cliente.getDominioAplicacao(),
 				cliente.getDataVencimentoDominio(),
+				cliente.getInformacoesUteis(),
 				cliente.getValorMensal() != null ? cliente.getValorMensal() : BigDecimal.ZERO,
 				cliente.getAtivo() != null && cliente.getAtivo() == 1 ? 1 : 0,
 				validarVendedor(cliente.getVendedorId()));
@@ -67,6 +68,7 @@ public class ClienteService {
 							cliente.getContato(),
 							cliente.getDominioAplicacao(),
 							cliente.getDataVencimentoDominio(),
+							cliente.getInformacoesUteis(),
 							cliente.getVendedorId(),
 							vendedorNome,
 							cliente.getAtivo() != null && cliente.getAtivo() == 1,
@@ -94,6 +96,7 @@ public class ClienteService {
 				clienteAtualizado.getContato(),
 				clienteAtualizado.getDominioAplicacao(),
 				clienteAtualizado.getDataVencimentoDominio(),
+				clienteAtualizado.getInformacoesUteis(),
 				clienteAtualizado.getValorMensal() != null ? clienteAtualizado.getValorMensal() : BigDecimal.ZERO,
 				clienteAtualizado.getAtivo() != null && clienteAtualizado.getAtivo() == 1 ? 1 : 0,
 				validarVendedor(clienteAtualizado.getVendedorId()));

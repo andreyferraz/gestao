@@ -43,6 +43,7 @@ class ClienteServiceTest {
         input.setContato("contato");
         input.setDominioAplicacao("dominio");
         input.setDataVencimentoDominio(LocalDate.of(2026, 1, 1));
+        input.setInformacoesUteis("infos importantes");
         input.setValorMensal(BigDecimal.valueOf(100));
         input.setAtivo(1);
         input.setVendedorId(null);
@@ -54,9 +55,10 @@ class ClienteServiceTest {
         assertEquals(input.getContato(), result.getContato());
         assertEquals(input.getDominioAplicacao(), result.getDominioAplicacao());
         assertEquals(input.getDataVencimentoDominio(), result.getDataVencimentoDominio());
+        assertEquals(input.getInformacoesUteis(), result.getInformacoesUteis());
         assertEquals(input.getValorMensal(), result.getValorMensal());
         assertEquals(input.getAtivo(), result.getAtivo());
-        verify(clienteRepository).inserir(any(UUID.class), eq("Nome"), eq("contato"), eq("dominio"), eq(LocalDate.of(2026, 1, 1)), eq(BigDecimal.valueOf(100)), eq(1), isNull());
+        verify(clienteRepository).inserir(any(UUID.class), eq("Nome"), eq("contato"), eq("dominio"), eq(LocalDate.of(2026, 1, 1)), eq("infos importantes"), eq(BigDecimal.valueOf(100)), eq(1), isNull());
     }
 
     @Test
@@ -66,6 +68,7 @@ class ClienteServiceTest {
         input.setContato("contato");
         input.setDominioAplicacao("dominio");
         input.setDataVencimentoDominio(LocalDate.of(2026, 1, 1));
+        input.setInformacoesUteis("sem valor informado");
         input.setValorMensal(null);
         input.setAtivo(null);
         input.setVendedorId(null);
@@ -93,6 +96,7 @@ class ClienteServiceTest {
         c.setContato("c");
         c.setDominioAplicacao("d");
         c.setDataVencimentoDominio(LocalDate.now());
+        c.setInformacoesUteis("observacoes do cliente");
         c.setValorMensal(null);
         c.setAtivo(0);
         c.setVendedorId(null);
@@ -100,6 +104,7 @@ class ClienteServiceTest {
         var resumo = clienteService.listarResumoDashboard();
         assertEquals(1, resumo.size());
         assertEquals(0.0, resumo.get(0).valorMensal());
+        assertEquals("observacoes do cliente", resumo.get(0).informacoesUteis());
     }
 
     @Test
@@ -110,6 +115,7 @@ class ClienteServiceTest {
         input.setContato("contato");
         input.setDominioAplicacao("dominio");
         input.setDataVencimentoDominio(LocalDate.of(2026, 1, 1));
+        input.setInformacoesUteis("dados do vendedor");
         input.setValorMensal(BigDecimal.valueOf(100));
         input.setAtivo(1);
         input.setVendedorId(vendedorId);
@@ -132,6 +138,7 @@ class ClienteServiceTest {
         c.setContato("cont");
         c.setDominioAplicacao("dom");
         c.setDataVencimentoDominio(LocalDate.now());
+        c.setInformacoesUteis("informacao extra");
         c.setValorMensal(BigDecimal.valueOf(50));
         c.setAtivo(1);
         c.setVendedorId(vendedorId);
@@ -141,6 +148,7 @@ class ClienteServiceTest {
         var resumo = clienteService.listarResumoDashboard();
         assertEquals(1, resumo.size());
         assertEquals("Joao", resumo.get(0).vendedorNome());
+        assertEquals("informacao extra", resumo.get(0).informacoesUteis());
         assertTrue(resumo.get(0).ativo());
         assertEquals(50.0, resumo.get(0).valorMensal());
     }

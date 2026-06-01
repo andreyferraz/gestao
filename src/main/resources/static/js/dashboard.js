@@ -56,6 +56,7 @@ window.addEventListener("DOMContentLoaded", function () {
         novoNomeInput: document.getElementById("novo-nome"),
         novoContatoInput: document.getElementById("novo-contato"),
         novoDominioInput: document.getElementById("novo-dominio"),
+        novoInformacoesUteisInput: document.getElementById("novo-informacoes-uteis"),
         novoVencimentoInput: document.getElementById("novo-vencimento"),
         novoValorInput: document.getElementById("novo-valor"),
         novoVendedorSelect: document.getElementById("novo-vendedor"),
@@ -238,6 +239,7 @@ window.addEventListener("DOMContentLoaded", function () {
             contato: cliente.contato || "Nao informado",
             dominioAplicacao: cliente.dominioAplicacao || "Nao informado",
             dataVencimentoDominio: cliente.dataVencimentoDominio || "",
+            informacoesUteis: cliente.informacoesUteis || "",
             vendedorId: cliente.vendedorId || null,
             vendedorNome: cliente.vendedorNome || null,
             ativo: ativoNormalizado,
@@ -606,6 +608,9 @@ window.addEventListener("DOMContentLoaded", function () {
         elementos.novoNomeInput.value = cliente.nome || "";
         elementos.novoContatoInput.value = cliente.contato || "";
         elementos.novoDominioInput.value = cliente.dominioAplicacao || "";
+        if (elementos.novoInformacoesUteisInput) {
+            elementos.novoInformacoesUteisInput.value = cliente.informacoesUteis || "";
+        }
         elementos.novoVencimentoInput.value = cliente.dataVencimentoDominio || "";
         if (elementos.novoValorInput) {
             elementos.novoValorInput.value = String(Number(cliente.valorMensal) || 0);
@@ -732,6 +737,7 @@ window.addEventListener("DOMContentLoaded", function () {
             + "<dt>Contato</dt><dd>" + cliente.contato + "</dd>"
             + "<dt>Dominio</dt><dd>" + cliente.dominioAplicacao + "</dd>"
             + "<dt>Vencimento</dt><dd>" + formatarData(cliente.dataVencimentoDominio) + "</dd>"
+            + "<dt>Informacoes uteis</dt><dd class=\"pre-line\">" + (cliente.informacoesUteis || "Sem informacoes") + "</dd>"
             + "<dt>Vendedor</dt><dd>" + (cliente.vendedorNome || "Sem vendedor") + "</dd>"
             + "<dt>Status</dt><dd>" + (cliente.ativo ? "Ativo" : "Inativo") + "</dd>"
             + "<dt>Valor Mensal</dt><dd>" + formatarMoeda(cliente.valorMensal) + "</dd>"
@@ -1650,6 +1656,7 @@ window.addEventListener("DOMContentLoaded", function () {
         const nome = elementos.novoNomeInput.value.trim();
         const contato = elementos.novoContatoInput.value.trim();
         const dominioAplicacao = elementos.novoDominioInput.value.trim();
+        const informacoesUteis = elementos.novoInformacoesUteisInput ? elementos.novoInformacoesUteisInput.value.trim() : "";
         const dataVencimentoDominio = elementos.novoVencimentoInput.value;
         const ativo = elementos.novoAtivoInput.value === "true";
         const valorMensal = Number(elementos.novoValorInput ? elementos.novoValorInput.value : 0) || 0;
@@ -1663,6 +1670,7 @@ window.addEventListener("DOMContentLoaded", function () {
             nome: nome,
             contato: contato,
             dominioAplicacao: dominioAplicacao,
+            informacoesUteis: informacoesUteis,
             dataVencimentoDominio: dataVencimentoDominio,
             valorMensal: valorMensal,
             ativo: ativo ? 1 : 0,
@@ -1697,6 +1705,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
         const clienteCriado = normalizarCliente(await response.json());
         clienteCriado.valorMensal = valorMensal;
+        clienteCriado.informacoesUteis = informacoesUteis;
 
         await carregarClientesBackend();
 

@@ -13,25 +13,27 @@ import org.springframework.stereotype.Repository;
 public interface ClienteRepository extends CrudRepository<Cliente, UUID> {
 
 	@Modifying
-	@Query("INSERT INTO cliente (id, nome, contato, dominio_aplicacao, data_vencimento_dominio, valor_mensal, ativo, vendedor_id) VALUES (:id, :nome, :contato, :dominioAplicacao, :dataVencimentoDominio, :valorMensal, :ativo, :vendedorId)")
+	@Query("INSERT INTO cliente (id, nome, contato, dominio_aplicacao, data_vencimento_dominio, informacoes_uteis, valor_mensal, ativo, vendedor_id) VALUES (:id, :nome, :contato, :dominioAplicacao, :dataVencimentoDominio, :informacoesUteis, :valorMensal, :ativo, :vendedorId)")
 	void inserir(
 			UUID id,
 			String nome,
 			String contato,
 			String dominioAplicacao,
 			LocalDate dataVencimentoDominio,
+			String informacoesUteis,
 			BigDecimal valorMensal,
 			Integer ativo,
 			UUID vendedorId);
 
 	@Modifying
-	@Query("UPDATE cliente SET nome = :nome, contato = :contato, dominio_aplicacao = :dominioAplicacao, data_vencimento_dominio = :dataVencimentoDominio, valor_mensal = :valorMensal, ativo = :ativo, vendedor_id = :vendedorId WHERE id = :id")
+	@Query("UPDATE cliente SET nome = :nome, contato = :contato, dominio_aplicacao = :dominioAplicacao, data_vencimento_dominio = :dataVencimentoDominio, informacoes_uteis = :informacoesUteis, valor_mensal = :valorMensal, ativo = :ativo, vendedor_id = :vendedorId WHERE id = :id")
 	void atualizar(
 			UUID id,
 			String nome,
 			String contato,
 			String dominioAplicacao,
 			LocalDate dataVencimentoDominio,
+			String informacoesUteis,
 			BigDecimal valorMensal,
 			Integer ativo,
 			UUID vendedorId);

@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS cliente (
 	contato TEXT,
 	dominio_aplicacao TEXT,
 	data_vencimento_dominio DATE,
+	informacoes_uteis TEXT,
 	valor_mensal NUMERIC NOT NULL DEFAULT 0,
 	ativo INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1)),
 	vendedor_id TEXT,

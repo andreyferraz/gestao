@@ -27,9 +27,14 @@ public class ClienteSchemaInitializer {
 
 		boolean hasContato = hasColumn(CLIENTE_TABLE, "contato");
 		boolean hasValorMensal = hasColumn(CLIENTE_TABLE, "valor_mensal");
+		boolean hasInformacoesUteis = hasColumn(CLIENTE_TABLE, "informacoes_uteis");
 
 		if (!hasContato) {
 			jdbcTemplate.execute("ALTER TABLE cliente ADD COLUMN contato TEXT");
+		}
+
+		if (!hasInformacoesUteis) {
+			jdbcTemplate.execute("ALTER TABLE cliente ADD COLUMN informacoes_uteis TEXT");
 		}
 
 		if (!hasValorMensal) {

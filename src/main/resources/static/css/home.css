@@ -391,6 +391,10 @@ body.dashboard-page {
     margin: 0;
 }
 
+.dashboard-page .cliente-detalhe dd.pre-line {
+	white-space: pre-wrap;
+}
+
 .dashboard-page .recibo-box {
     border: 1px solid var(--line);
     border-radius: 10px;

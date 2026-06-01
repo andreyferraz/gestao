@@ -9,6 +9,7 @@ public record ClienteDashboardDto(
 		String contato,
 		String dominioAplicacao,
 		LocalDate dataVencimentoDominio,
+		String informacoesUteis,
 		UUID vendedorId,
 		String vendedorNome,
 		Boolean ativo,
