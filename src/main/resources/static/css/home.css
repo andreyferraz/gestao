@@ -300,6 +300,17 @@ body.dashboard-page {
     background: #ecfeff;
 }
 
+.dashboard-page .cliente-item.inativo {
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+.dashboard-page .cliente-item.inativo:hover,
+.dashboard-page .cliente-item.inativo.active {
+    border-color: #ef4444;
+    background: #fee2e2;
+}
+
 .dashboard-page .cliente-item h4 {
     margin: 0 0 2px;
     font-size: 15px;

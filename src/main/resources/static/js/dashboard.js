@@ -695,15 +695,23 @@ window.addEventListener("DOMContentLoaded", function () {
 
     const obterReceitaMensal = function () {
         return clientes.reduce(function (acc, cliente) {
-            return acc + cliente.valorMensal;
+            return cliente.ativo ? acc + cliente.valorMensal : acc;
         }, 0);
+    };
+
+    const obterClientesOrdenadosParaLista = function () {
+        return clientes.slice().sort(function (a, b) {
+            if (a.ativo !== b.ativo) {
+                return a.ativo ? -1 : 1;
+            }
+
+            return a.nome.localeCompare(b.nome, "pt-BR");
+        });
     };
 
     const atualizarKpis = function () {
         const totalClientes = clientes.length;
-        const totalReceita = clientes.reduce(function (acc, cliente) {
-            return acc + cliente.valorMensal;
-        }, 0);
+        const totalReceita = obterReceitaMensal();
         const dominiosAtivos = clientes.filter(function (cliente) {
             return cliente.ativo;
         }).length;
@@ -1484,7 +1492,9 @@ window.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        clientes.forEach(function (cliente) {
+        const clientesOrdenados = obterClientesOrdenadosParaLista();
+
+        clientesOrdenados.forEach(function (cliente) {
             const diasRestantes = diasParaVencerDominio(cliente.dataVencimentoDominio);
             const proximoDeVencer = diasRestantes !== null && diasRestantes >= 0 && diasRestantes <= 10;
             const seloAlerta = proximoDeVencer
@@ -1493,6 +1503,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
             const item = document.createElement("li");
             item.className = "cliente-item";
+            item.classList.toggle("inativo", !cliente.ativo);
             item.dataset.id = cliente.id;
             item.innerHTML = ""
                 + "<div class=\"cliente-topo\"><h4>" + cliente.nome + "</h4>" + seloAlerta + "</div>"
