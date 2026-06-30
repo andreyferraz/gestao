@@ -1092,6 +1092,8 @@ window.addEventListener("DOMContentLoaded", function () {
             });
             if (clienteLista) {
                 clienteSelecionado.valorMensal = clienteLista.valorMensal;
+                clienteSelecionado.vendedorId = clienteLista.vendedorId;
+                clienteSelecionado.vendedorNome = clienteLista.vendedorNome;
             }
             renderDetalhe(clienteSelecionado);
             ativarAba("tab-detalhes");
