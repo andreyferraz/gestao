@@ -538,6 +538,16 @@ body.dashboard-page {
     gap: 8px;
 }
 
+.dashboard-page .cadastro-form .inline-actions {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+}
+
+.dashboard-page .cadastro-form .inline-actions button {
+    white-space: nowrap;
+}
+
 .dashboard-page .cadastro-form label {
     font-size: 13px;
     color: var(--muted);
@@ -550,6 +560,12 @@ body.dashboard-page {
     border-radius: 10px;
     padding: 10px;
     font-size: 14px;
+}
+
+@media (max-width: 640px) {
+    .dashboard-page .cadastro-form .inline-actions {
+        grid-template-columns: 1fr;
+    }
 }
 
 .dashboard-page .obs {

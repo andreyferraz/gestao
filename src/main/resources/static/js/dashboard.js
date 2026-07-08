@@ -63,6 +63,8 @@ window.addEventListener("DOMContentLoaded", function () {
         novoAtivoInput: document.getElementById("novo-ativo"),
         cadastroModo: document.getElementById("cadastro-modo"),
         salvarClienteButton: document.getElementById("salvar-cliente"),
+        importarLeadSelect: document.getElementById("importar-lead-select"),
+        importarLeadButton: document.getElementById("importar-lead-btn"),
         vendedorForm: document.getElementById("vendedor-form"),
         vendedorNomeInput: document.getElementById("vendedor-nome"),
         vendedorTelefoneInput: document.getElementById("vendedor-telefone"),
@@ -107,6 +109,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
     let clienteSelecionado = null;
     let clienteEmEdicaoId = null;
+    let leadImportadoId = null;
     let leadSelecionado = null;
     let leadEmEdicaoId = null;
     let vendedorSelecionado = null;
@@ -370,6 +373,71 @@ window.addEventListener("DOMContentLoaded", function () {
         }
     };
 
+    const limparImportacaoLead = function () {
+        leadImportadoId = null;
+        if (elementos.importarLeadSelect) {
+            elementos.importarLeadSelect.value = "";
+        }
+    };
+
+    const popularSelectLeadsImportacao = function () {
+        if (!elementos.importarLeadSelect) {
+            return;
+        }
+
+        const valorAtual = elementos.importarLeadSelect.value;
+        elementos.importarLeadSelect.innerHTML = '<option value="">Selecione um lead</option>';
+
+        leads.forEach(function (lead) {
+            const option = document.createElement("option");
+            option.value = lead.id;
+            option.textContent = lead.nome;
+            elementos.importarLeadSelect.appendChild(option);
+        });
+
+        const valorValido = leads.some(function (lead) {
+            return lead.id === valorAtual;
+        });
+        elementos.importarLeadSelect.value = valorValido ? valorAtual : "";
+
+        if (leadImportadoId) {
+            const leadImportadoExiste = leads.some(function (lead) {
+                return lead.id === leadImportadoId;
+            });
+            if (!leadImportadoExiste) {
+                leadImportadoId = null;
+            }
+        }
+    };
+
+    const importarLeadParaNovoCliente = function () {
+        if (!elementos.importarLeadSelect || !elementos.novoNomeInput || !elementos.novoContatoInput) {
+            return;
+        }
+
+        const leadId = elementos.importarLeadSelect.value;
+        if (!leadId) {
+            throw new Error("Selecione um lead para importar.");
+        }
+
+        const leadSelecionadoParaImportar = leads.find(function (lead) {
+            return lead.id === leadId;
+        });
+
+        if (!leadSelecionadoParaImportar) {
+            throw new Error("Lead selecionado nao foi encontrado.");
+        }
+
+        elementos.novoNomeInput.value = leadSelecionadoParaImportar.nome || "";
+        elementos.novoContatoInput.value = leadSelecionadoParaImportar.telefone || "";
+        if (elementos.novoInformacoesUteisInput) {
+            elementos.novoInformacoesUteisInput.value = leadSelecionadoParaImportar.observacoes || "";
+        }
+
+        leadImportadoId = leadSelecionadoParaImportar.id;
+        setCadastroFeedback("Lead importado. Complete os demais campos e salve o cliente.", false);
+    };
+
     const popularSelectVendedoresCliente = function () {
         if (!elementos.novoVendedorSelect) {
             return;
@@ -543,10 +611,33 @@ window.addEventListener("DOMContentLoaded", function () {
         if (elementos.leadNomeInput) elementos.leadNomeInput.focus();
     };
 
-    const excluirLeadById = async function (id) {
-        if (!id) return;
-        const confirmar = window.confirm("Deseja realmente excluir este lead?");
-        if (!confirmar) return;
+    const removerLeadDaMemoria = function (leadId) {
+        if (!leadId) {
+            return;
+        }
+
+        if (leadSelecionado && leadSelecionado.id === leadId) {
+            leadSelecionado = null;
+            leadEmEdicaoId = null;
+        }
+
+        if (leadImportadoId === leadId) {
+            limparImportacaoLead();
+        }
+
+        const leadsRestantes = leads.filter(function (lead) {
+            return lead.id !== leadId;
+        });
+        leads.splice(0, leads.length, ...leadsRestantes);
+
+        popularSelectLeadsImportacao();
+        renderLeads();
+    };
+
+    const excluirLeadSemConfirmacao = async function (id) {
+        if (!id) {
+            return;
+        }
 
         const response = await fetch(montarUrlAplicacao("/leads/" + encodeURIComponent(id)), {
             method: "DELETE",
@@ -558,19 +649,16 @@ window.addEventListener("DOMContentLoaded", function () {
             throw new Error(mensagemErro);
         }
 
-        const idExcluido = id;
-        if (leadSelecionado && leadSelecionado.id === idExcluido) {
-            leadSelecionado = null;
-            leadEmEdicaoId = null;
-        }
+        removerLeadDaMemoria(id);
+    };
 
-        const leadsRestantes = leads.filter(function (lead) {
-            return lead.id !== idExcluido;
-        });
-        leads.splice(0, leads.length, ...leadsRestantes);
+    const excluirLeadById = async function (id) {
+        if (!id) return;
+        const confirmar = window.confirm("Deseja realmente excluir este lead?");
+        if (!confirmar) return;
 
-        renderLeads();
-        renderLeads();
+        await excluirLeadSemConfirmacao(id);
+
         if (elementos.leadForm) {
             elementos.leadForm.reset();
         }
@@ -597,6 +685,12 @@ window.addEventListener("DOMContentLoaded", function () {
             elementos.salvarClienteButton.textContent = emEdicao
                 ? "Atualizar Cliente"
                 : "Salvar Cliente";
+        }
+        if (elementos.importarLeadSelect) {
+            elementos.importarLeadSelect.disabled = emEdicao;
+        }
+        if (elementos.importarLeadButton) {
+            elementos.importarLeadButton.disabled = emEdicao;
         }
     };
 
@@ -626,6 +720,7 @@ window.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
+        limparImportacaoLead();
         clienteSelecionado = cliente;
         clienteEmEdicaoId = cliente.id;
         preencherFormularioComCliente(cliente);
@@ -1191,6 +1286,7 @@ window.addEventListener("DOMContentLoaded", function () {
         const data = await buscarJson("/leads");
         const lista = Array.isArray(data) ? data : [];
         leads.splice(0, leads.length, ...lista.map(normalizarLead));
+        popularSelectLeadsImportacao();
         renderLeads();
     };
 
@@ -1467,30 +1563,10 @@ window.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        const response = await fetch(montarUrlAplicacao("/leads/" + encodeURIComponent(leadSelecionado.id)), {
-            method: "DELETE",
-            headers: obterHeadersComCsrf({
-                Accept: "application/json"
-            })
-        });
+        await excluirLeadSemConfirmacao(leadSelecionado.id);
 
-        if (!response.ok) {
-            const mensagemErro = await obterMensagemErroApi(response, "Falha ao excluir lead");
-            throw new Error(mensagemErro);
-        }
-
-        const idExcluido = leadSelecionado.id;
-        leadSelecionado = null;
-        leadEmEdicaoId = null;
         atualizarModoLead();
 
-        const leadsRestantes = leads.filter(function (lead) {
-            return lead.id !== idExcluido;
-        });
-        leads.splice(0, leads.length, ...leadsRestantes);
-
-        renderLeads();
-        renderLeads();
         if (elementos.leadForm) {
             elementos.leadForm.reset();
         }
@@ -1708,6 +1784,7 @@ window.addEventListener("DOMContentLoaded", function () {
         }
 
         const editando = Boolean(clienteEmEdicaoId);
+        const leadParaExcluirAposSalvar = !editando ? leadImportadoId : null;
         const url = editando
             ? "/clientes/" + encodeURIComponent(clienteEmEdicaoId)
             : "/clientes";
@@ -1737,6 +1814,21 @@ window.addEventListener("DOMContentLoaded", function () {
             elementos.cadastroForm.reset();
         }
 
+        let mensagemCadastro = editando ? "Cliente atualizado com sucesso." : "Cliente cadastrado com sucesso.";
+        let exclusaoLeadFalhou = false;
+
+        if (leadParaExcluirAposSalvar) {
+            try {
+                await excluirLeadSemConfirmacao(leadParaExcluirAposSalvar);
+                mensagemCadastro = "Cliente cadastrado com sucesso e lead importado excluido automaticamente.";
+            } catch (error) {
+                exclusaoLeadFalhou = true;
+                mensagemCadastro = "Cliente cadastrado com sucesso, mas nao foi possivel excluir o lead importado automaticamente.";
+            }
+        }
+
+        limparImportacaoLead();
+
         clienteEmEdicaoId = null;
         atualizarModoCadastro();
         popularSelectVendedoresCliente();
@@ -1744,7 +1836,7 @@ window.addEventListener("DOMContentLoaded", function () {
         atualizarKpis();
         renderAlertasDominio();
         renderLista();
-        setCadastroFeedback(editando ? "Cliente atualizado com sucesso." : "Cliente cadastrado com sucesso.", false);
+        setCadastroFeedback(mensagemCadastro, exclusaoLeadFalhou);
         ativarAba("tab-cadastro");
     };
 
@@ -1902,6 +1994,27 @@ window.addEventListener("DOMContentLoaded", function () {
                     ? error.message
                     : "Nao foi possivel salvar cliente agora. Tente novamente.";
                 setCadastroFeedback(mensagem, true);
+            }
+        });
+    }
+
+    if (elementos.importarLeadButton) {
+        elementos.importarLeadButton.addEventListener("click", function () {
+            try {
+                importarLeadParaNovoCliente();
+            } catch (error) {
+                const mensagem = error instanceof Error && error.message
+                    ? error.message
+                    : "Nao foi possivel importar o lead agora.";
+                setCadastroFeedback(mensagem, true);
+            }
+        });
+    }
+
+    if (elementos.importarLeadSelect) {
+        elementos.importarLeadSelect.addEventListener("change", function () {
+            if (!elementos.importarLeadSelect.value) {
+                leadImportadoId = null;
             }
         });
     }

@@ -122,6 +122,14 @@
                 <p class="panel-sub">Cadastro conectado ao backend de clientes.</p>
 
                 <form id="cadastro-form" class="cadastro-form" action="#" method="post" onsubmit="return false;">
+                    <label for="importar-lead-select">Importar lead</label>
+                    <div class="inline-actions">
+                        <select id="importar-lead-select">
+                            <option value="">Selecione um lead</option>
+                        </select>
+                        <button id="importar-lead-btn" type="button">Importar</button>
+                    </div>
+
                     <label for="novo-nome">Nome</label>
                     <input id="novo-nome" type="text" placeholder="Ex.: Empresa Orion" required>
 
@@ -312,6 +320,6 @@
     </dialog>
 </div>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script defer src="/js/dashboard.js?v=18" th:src="@{/js/dashboard.js(v=18)}"></script>
+<script defer src="/js/dashboard.js?v=19" th:src="@{/js/dashboard.js(v=19)}"></script>
 </body>
 </html>
