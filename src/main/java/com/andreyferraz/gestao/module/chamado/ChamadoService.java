@@ -2,7 +2,10 @@ package com.andreyferraz.gestao.module.chamado;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
+
+import jakarta.annotation.PostConstruct;
 
 import org.springframework.stereotype.Service;
 
@@ -13,6 +16,11 @@ import lombok.RequiredArgsConstructor;
 public class ChamadoService {
 
 	private final ChamadoRepository chamadoRepository;
+
+	@PostConstruct
+	void limparChamadosResolvidosAoIniciar() {
+		chamadoRepository.excluirResolvidos();
+	}
 
 	public Chamado criar(Chamado chamado) {
 		validarChamado(chamado);
@@ -33,6 +41,7 @@ public class ChamadoService {
 	}
 
 	public List<Chamado> listarTodos() {
+		chamadoRepository.excluirResolvidos();
 		return chamadoRepository.findAllOrderByRecente();
 	}
 
@@ -41,14 +50,19 @@ public class ChamadoService {
 				.orElseThrow(() -> new NoSuchElementException("Chamado nao encontrado para o id: " + id));
 	}
 
-	public Chamado atualizarStatus(UUID id, Chamado.Status status) {
+	public Optional<Chamado> atualizarStatus(UUID id, Chamado.Status status) {
 		if (status == null) {
 			throw new IllegalArgumentException("Status do chamado e obrigatorio.");
 		}
 
 		buscarPorId(id);
+		if (status == Chamado.Status.RESOLVIDO) {
+			chamadoRepository.excluirPorId(id);
+			return Optional.empty();
+		}
+
 		chamadoRepository.atualizarStatus(id, status);
-		return buscarPorId(id);
+		return Optional.of(buscarPorId(id));
 	}
 
 	public Chamado atualizarDescricao(UUID id, String descricaoProblema) {

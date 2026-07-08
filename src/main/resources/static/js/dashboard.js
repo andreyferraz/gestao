@@ -1219,8 +1219,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
             const statusClass = chamado.status === "RESOLVIDO" ? "resolvido" : "aberto";
             const statusLabel = chamado.status === "RESOLVIDO" ? "Resolvido" : "Aberto";
-            const proximoStatus = chamado.status === "RESOLVIDO" ? "ABERTO" : "RESOLVIDO";
-            const acaoTexto = chamado.status === "RESOLVIDO" ? "Reabrir" : "Marcar como resolvido";
+            const acaoTexto = "Marcar como resolvido";
 
             item.innerHTML = ""
                 + "<div class=\"chamado-topo\">"
@@ -1230,14 +1229,14 @@ window.addEventListener("DOMContentLoaded", function () {
                 + "<p>" + chamado.descricaoProblema + "</p>"
                 + "<div class=\"chamado-botoes\">"
                 + "<button type=\"button\" class=\"chamado-editar\" data-id=\"" + chamado.id + "\">Editar texto</button>"
-                + "<button type=\"button\" class=\"chamado-acao\" data-id=\"" + chamado.id + "\" data-status=\"" + proximoStatus + "\">" + acaoTexto + "</button>"
+                + "<button type=\"button\" class=\"chamado-acao\" data-id=\"" + chamado.id + "\" data-status=\"RESOLVIDO\">" + acaoTexto + "</button>"
                 + "</div>";
 
             const botaoAcao = item.querySelector(".chamado-acao");
             if (botaoAcao) {
                 botaoAcao.addEventListener("click", async function () {
                     try {
-                        await atualizarStatusChamado(chamado.id, proximoStatus);
+                        await atualizarStatusChamado(chamado.id, "RESOLVIDO");
                     } catch (error) {
                         const mensagem = error instanceof Error && error.message
                             ? error.message
@@ -1314,6 +1313,18 @@ window.addEventListener("DOMContentLoaded", function () {
         if (!response.ok) {
             const mensagemErro = await obterMensagemErroApi(response, "Falha ao atualizar status do chamado");
             throw new Error(mensagemErro);
+        }
+
+        if (response.status === 204) {
+            const chamadosAbertos = chamados.filter(function (item) {
+                return item.id !== chamadoId;
+            });
+            chamados.splice(0, chamados.length, ...chamadosAbertos);
+
+            renderChamados();
+            atualizarContadorChamadosAbertos();
+            setChamadoFeedback("Chamado resolvido e removido com sucesso.", false);
+            return;
         }
 
         const chamadoAtualizado = normalizarChamado(await response.json());

@@ -23,6 +23,14 @@ public interface ChamadoRepository extends CrudRepository<Chamado, UUID> {
 	@Query("UPDATE chamado SET descricao_problema = :descricaoProblema WHERE id = :id")
 	void atualizarDescricao(UUID id, String descricaoProblema);
 
+	@Modifying
+	@Query("DELETE FROM chamado WHERE id = :id")
+	void excluirPorId(UUID id);
+
+	@Modifying
+	@Query("DELETE FROM chamado WHERE status = 'RESOLVIDO'")
+	void excluirResolvidos();
+
 	@Query("SELECT id, cliente_id, descricao_problema, status FROM chamado ORDER BY rowid DESC")
 	List<Chamado> findAllOrderByRecente();
 }

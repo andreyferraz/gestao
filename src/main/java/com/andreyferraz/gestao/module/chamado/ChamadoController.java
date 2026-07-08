@@ -41,10 +41,12 @@ public class ChamadoController {
 	}
 
 	@PutMapping("/{id}/status")
-	public ResponseEntity<Chamado> atualizarStatus(
+	public ResponseEntity<Object> atualizarStatus(
 			@PathVariable UUID id,
 			@RequestParam Chamado.Status status) {
-		return ResponseEntity.ok(chamadoService.atualizarStatus(id, status));
+		return chamadoService.atualizarStatus(id, status)
+				.map(chamado -> ResponseEntity.ok((Object) chamado))
+				.orElseGet(() -> ResponseEntity.noContent().build());
 	}
 
 	@PutMapping("/{id}/descricao")
