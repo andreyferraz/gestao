@@ -31,4 +31,7 @@ public class Lead {
 	private BigDecimal orcamentoManutencaoHospedagem;
 
 	private String observacoes;
+
+	@Column("updated_at")
+	private String updatedAt;
 }

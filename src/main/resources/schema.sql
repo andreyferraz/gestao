@@ -43,7 +43,8 @@ CREATE TABLE IF NOT EXISTS lead (
 	telefone TEXT NOT NULL,
 	orcamento_desenvolvimento NUMERIC NOT NULL DEFAULT 0,
 	orcamento_manutencao_hospedagem NUMERIC NOT NULL DEFAULT 0,
-	observacoes TEXT
+	observacoes TEXT,
+	updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS chamado (

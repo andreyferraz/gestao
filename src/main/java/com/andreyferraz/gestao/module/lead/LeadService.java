@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import java.util.stream.StreamSupport;
 
 import org.springframework.stereotype.Service;
 
@@ -34,8 +33,7 @@ public class LeadService {
 	}
 
 	public List<Lead> listarTodos() {
-		return StreamSupport.stream(leadRepository.findAll().spliterator(), false)
-				.toList();
+		return leadRepository.findAllOrderByAtualizacaoRecente();
 	}
 
 	public Lead buscarPorId(UUID id) {
@@ -46,14 +44,16 @@ public class LeadService {
 	public Lead atualizar(UUID id, Lead leadAtualizado) {
 		validarLead(leadAtualizado);
 
-		Lead leadExistente = buscarPorId(id);
-		leadExistente.setNome(leadAtualizado.getNome());
-		leadExistente.setTelefone(leadAtualizado.getTelefone());
-		leadExistente.setOrcamentoDesenvolvimento(leadAtualizado.getOrcamentoDesenvolvimento());
-		leadExistente.setOrcamentoManutencaoHospedagem(leadAtualizado.getOrcamentoManutencaoHospedagem());
-		leadExistente.setObservacoes(leadAtualizado.getObservacoes());
+		buscarPorId(id);
+		leadRepository.atualizar(
+				id,
+				leadAtualizado.getNome(),
+				leadAtualizado.getTelefone(),
+				leadAtualizado.getOrcamentoDesenvolvimento(),
+				leadAtualizado.getOrcamentoManutencaoHospedagem(),
+				leadAtualizado.getObservacoes());
 
-		return leadRepository.save(leadExistente);
+		return buscarPorId(id);
 	}
 
 	public void remover(UUID id) {
