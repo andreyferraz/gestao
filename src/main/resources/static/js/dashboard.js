@@ -859,6 +859,11 @@ window.addEventListener("DOMContentLoaded", function () {
     };
 
     const renderizarRecibo = function (cliente, valorFinal, dataAtual) {
+        const competenciaRecibo = new Intl.DateTimeFormat("pt-BR", {
+            month: "long",
+            year: "numeric"
+        }).format(new Date());
+
         elementos.reciboPreview.innerHTML = ""
             + "<div class=\"recibo-brand\">"
             + "<p class=\"recibo-brand-name\">Andrêy Ferraz</p>"
@@ -868,56 +873,28 @@ window.addEventListener("DOMContentLoaded", function () {
             + "<p><strong>RECIBO DE SERVICO</strong></p>"
             + "<p>Recebemos de <strong>" + cliente.nome + "</strong> o valor de <strong>" + formatarMoeda(valorFinal)
             + "</strong>, referente a servicos de <strong>manutencao e hospedagem</strong>.</p>"
+            + "<p>Competencia: <strong>" + competenciaRecibo + "</strong></p>"
             + "<p>Data de emissao: <strong>" + dataAtual + "</strong></p>"
             + "<p>Dominio vinculado: <strong>" + cliente.dominioAplicacao + "</strong></p>";
     };
 
-    const abrirReciboEmPdf = function (cliente, valorFinal, dataAtual) {
-        const janela = window.open("", "_blank", "noopener,noreferrer");
-        if (!janela) {
-            return;
-        }
-
-        const htmlRecibo = "<!doctype html>"
-            + "<html lang=\"pt-BR\"><head><meta charset=\"utf-8\">"
-            + "<title>Recibo - " + (cliente.nome || "Cliente") + "</title>"
-            + "<style>"
-            + "body{font-family:Arial,sans-serif;margin:24px;color:#0f172a;}"
-            + ".wrap{max-width:760px;margin:0 auto;border:1px solid #cbd5e1;border-radius:12px;padding:24px;background:#fff;}"
-            + ".brand{border-bottom:2px solid #0f766e;padding-bottom:12px;margin-bottom:18px;}"
-            + ".brand h1{margin:0;font-size:32px;color:#0f172a;letter-spacing:.4px;}"
-            + ".brand p{margin:4px 0 0;color:#334155;}"
-            + ".title{font-size:18px;font-weight:700;margin:0 0 12px;}"
-            + "p{line-height:1.55;margin:8px 0;}"
-            + "@media print{body{margin:0}.wrap{border:none;padding:0}}"
-            + "</style></head><body>"
-            + "<main class=\"wrap\">"
-            + "<header class=\"brand\">"
-            + "<h1>Andrêy Ferraz</h1>"
-            + "<p>www.andreyferraz.com.br</p>"
-            + "<p>Desenvolvimento de aplicações web e mobile</p>"
-            + "</header>"
-            + "<p class=\"title\">RECIBO DE SERVICO</p>"
-            + "<p>Recebemos de <strong>" + cliente.nome + "</strong> o valor de <strong>" + formatarMoeda(valorFinal)
-            + "</strong>, referente a servicos de <strong>manutencao e hospedagem</strong>.</p>"
-            + "<p>Data de emissao: <strong>" + dataAtual + "</strong></p>"
-            + "<p>Dominio vinculado: <strong>" + cliente.dominioAplicacao + "</strong></p>"
-            + "</main></body></html>";
-
-        janela.document.open();
-        janela.document.write(htmlRecibo);
-        janela.document.close();
-        janela.focus();
-        janela.print();
-    };
-
     const obterDadosReciboComMovimentacoes = async function (cliente) {
         const dataAtual = new Intl.DateTimeFormat("pt-BR").format(new Date());
+        const competenciaTexto = new Intl.DateTimeFormat("pt-BR", {
+            month: "long",
+            year: "numeric"
+        }).format(new Date());
+        const competenciaArquivo = new Intl.DateTimeFormat("pt-BR", {
+            month: "2-digit",
+            year: "numeric"
+        }).format(new Date()).replace("/", "-");
         const valorPadrao = Number(cliente && cliente.valorMensal) || 0;
 
         if (!cliente || !cliente.id) {
             return {
                 dataAtual: dataAtual,
+                competenciaTexto: competenciaTexto,
+                competenciaArquivo: competenciaArquivo,
                 valorFinal: valorPadrao
             };
         }
@@ -934,11 +911,23 @@ window.addEventListener("DOMContentLoaded", function () {
 
         return {
             dataAtual: dataAtual,
+            competenciaTexto: competenciaTexto,
+            competenciaArquivo: competenciaArquivo,
             valorFinal: valorRecibo > 0 ? valorRecibo : valorPadrao
         };
     };
 
-    const gerarPdfReciboBlob = function (cliente, valorFinal, dataAtual) {
+    const montarNomeArquivoRecibo = function (cliente, competenciaArquivo) {
+        const nomeCliente = String(cliente.nome || "cliente").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+        const competencia = competenciaArquivo || new Intl.DateTimeFormat("pt-BR", {
+            month: "2-digit",
+            year: "numeric"
+        }).format(new Date()).replace("/", "-");
+
+        return "recibo-" + nomeCliente + "-" + competencia + ".pdf";
+    };
+
+    const gerarPdfReciboBlob = function (cliente, valorFinal, dataAtual, competenciaTexto) {
         const jsPdfNamespace = window.jspdf;
         if (!jsPdfNamespace || !jsPdfNamespace.jsPDF) {
             throw new Error("Biblioteca de PDF indisponivel no momento.");
@@ -986,6 +975,9 @@ window.addEventListener("DOMContentLoaded", function () {
         doc.text(linhasPrincipal, margemX, y);
 
         y += (linhasPrincipal.length * 16) + 12;
+        doc.text("Competência: " + (competenciaTexto || "não informada"), margemX, y);
+
+        y += 22;
         doc.text("Data de emissão: " + dataAtual, margemX, y);
 
         y += 22;
@@ -1035,9 +1027,10 @@ window.addEventListener("DOMContentLoaded", function () {
         const dadosRecibo = await obterDadosReciboComMovimentacoes(cliente);
         renderizarRecibo(cliente, dadosRecibo.valorFinal, dadosRecibo.dataAtual);
 
-        const blobPdf = gerarPdfReciboBlob(cliente, dadosRecibo.valorFinal, dadosRecibo.dataAtual);
-        const nomeArquivo = "recibo-" + String(cliente.nome || "cliente").toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".pdf";
-        const mensagem = "Olá, segue o recibo referente aos serviços de manutenção e hospedagem.";
+        const blobPdf = gerarPdfReciboBlob(cliente, dadosRecibo.valorFinal, dadosRecibo.dataAtual, dadosRecibo.competenciaTexto);
+        const nomeArquivo = montarNomeArquivoRecibo(cliente, dadosRecibo.competenciaArquivo);
+        const mensagem = "Olá, segue o recibo referente aos serviços de manutenção e hospedagem de "
+            + dadosRecibo.competenciaTexto + ".";
         const numeroWhatsapp = normalizarNumeroWhatsapp(cliente.contato);
 
         if (navigator.share && navigator.canShare) {
@@ -1065,10 +1058,21 @@ window.addEventListener("DOMContentLoaded", function () {
         }
 
         const dataAtual = new Intl.DateTimeFormat("pt-BR").format(new Date());
+        const competenciaTexto = new Intl.DateTimeFormat("pt-BR", {
+            month: "long",
+            year: "numeric"
+        }).format(new Date());
+        const competenciaArquivo = new Intl.DateTimeFormat("pt-BR", {
+            month: "2-digit",
+            year: "numeric"
+        }).format(new Date()).replace("/", "-");
         const valorFinal = Number(cliente.valorMensal) || 0;
 
         renderizarRecibo(cliente, valorFinal, dataAtual);
-        abrirReciboEmPdf(cliente, valorFinal, dataAtual);
+
+        const blobPdf = gerarPdfReciboBlob(cliente, valorFinal, dataAtual, competenciaTexto);
+        const nomeArquivo = montarNomeArquivoRecibo(cliente, competenciaArquivo);
+        baixarBlobComoArquivo(blobPdf, nomeArquivo);
     };
 
     const gerarReciboComMovimentacoes = async function (cliente) {
@@ -1078,7 +1082,10 @@ window.addEventListener("DOMContentLoaded", function () {
 
         const dadosRecibo = await obterDadosReciboComMovimentacoes(cliente);
         renderizarRecibo(cliente, dadosRecibo.valorFinal, dadosRecibo.dataAtual);
-        abrirReciboEmPdf(cliente, dadosRecibo.valorFinal, dadosRecibo.dataAtual);
+
+        const blobPdf = gerarPdfReciboBlob(cliente, dadosRecibo.valorFinal, dadosRecibo.dataAtual, dadosRecibo.competenciaTexto);
+        const nomeArquivo = montarNomeArquivoRecibo(cliente, dadosRecibo.competenciaArquivo);
+        baixarBlobComoArquivo(blobPdf, nomeArquivo);
     };
 
     const definirModoRelatorio = function (modo) {
