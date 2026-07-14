@@ -87,7 +87,9 @@ window.addEventListener("DOMContentLoaded", function () {
         leadModo: document.getElementById("lead-modo"),
         leadDetalhe: null,
         leadEditarButton: null,
-        leadExcluirButton: null
+        leadExcluirButton: null,
+        leadBuscaContainer: null,
+        leadBuscaInput: null
         , chamadoForm: document.getElementById("chamado-form")
         , chamadoClienteSelect: document.getElementById("chamado-cliente")
         , chamadoDescricaoInput: document.getElementById("chamado-descricao")
@@ -112,6 +114,7 @@ window.addEventListener("DOMContentLoaded", function () {
     let leadImportadoId = null;
     let leadSelecionado = null;
     let leadEmEdicaoId = null;
+    let leadBuscaTexto = "";
     let vendedorSelecionado = null;
     let vendedorEmEdicaoId = null;
     let chamadoEmEdicao = null;
@@ -477,6 +480,46 @@ window.addEventListener("DOMContentLoaded", function () {
                 ? "Atualizar Lead"
                 : "Salvar Lead";
         }
+    };
+
+    const normalizarTextoBusca = function (texto) {
+        return String(texto || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .trim();
+    };
+
+    const criarBuscaLeads = function () {
+        if (!elementos.leadForm || !elementos.leadsLista || elementos.leadBuscaContainer) {
+            return;
+        }
+
+        const container = document.createElement("div");
+        container.id = "lead-busca-container";
+        container.className = "lead-form lead-busca-form";
+
+        const label = document.createElement("label");
+        label.setAttribute("for", "lead-busca");
+        label.textContent = "Buscar leads";
+
+        const input = document.createElement("input");
+        input.id = "lead-busca";
+        input.type = "search";
+        input.placeholder = "Pesquise por nome, telefone ou observacoes";
+        input.autocomplete = "off";
+
+        input.addEventListener("input", function () {
+            leadBuscaTexto = normalizarTextoBusca(input.value);
+            renderLeads();
+        });
+
+        container.appendChild(label);
+        container.appendChild(input);
+
+        elementos.leadForm.insertAdjacentElement("afterend", container);
+        elementos.leadBuscaContainer = container;
+        elementos.leadBuscaInput = input;
     };
 
     const setVendedorFeedback = function (mensagem, erro) {
@@ -1245,6 +1288,22 @@ window.addEventListener("DOMContentLoaded", function () {
             atualizarResumoLeads();
             return;
         }
+
+        const termosBusca = normalizarTextoBusca(leadBuscaTexto);
+        const leadsVisiveis = termosBusca
+            ? leads.filter(function (lead) {
+                const camposBusca = [
+                    lead.nome,
+                    lead.telefone,
+                    lead.observacoes,
+                    formatarMoeda(lead.orcamentoDesenvolvimento),
+                    formatarMoeda(lead.orcamentoManutencaoHospedagem)
+                ].join(" ");
+
+                return normalizarTextoBusca(camposBusca).includes(termosBusca);
+            })
+            : leads.slice();
+
         elementos.leadsLista.innerHTML = "";
 
         if (leads.length === 0) {
@@ -1253,7 +1312,13 @@ window.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        leads.forEach(function (lead) {
+        if (leadsVisiveis.length === 0) {
+            elementos.leadsLista.innerHTML = "<li class=\"lead-item\"><p>Nenhum lead encontrado para a busca.</p></li>";
+            atualizarResumoLeads();
+            return;
+        }
+
+        leadsVisiveis.forEach(function (lead) {
             const item = document.createElement("li");
             item.className = "lead-item" + (leadSelecionado && leadSelecionado.id === lead.id ? " active" : "");
             item.dataset.id = lead.id;
@@ -2112,6 +2177,8 @@ window.addEventListener("DOMContentLoaded", function () {
         } catch (error) {
             setLeadFeedback("Nao foi possivel carregar leads do backend no momento.", true);
         }
+
+        criarBuscaLeads();
 
         try {
             await carregarChamadosBackend();
