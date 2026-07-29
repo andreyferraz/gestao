@@ -45,6 +45,16 @@ public class ClienteSchemaInitializer {
 			jdbcTemplate.execute("ALTER TABLE cliente ADD COLUMN vendedor_id TEXT");
 		}
 
+		if (!hasColumn(CLIENTE_TABLE, "created_at")) {
+			jdbcTemplate.execute("ALTER TABLE cliente ADD COLUMN created_at TEXT");
+		}
+
+		jdbcTemplate.execute("""
+				UPDATE cliente
+				SET created_at = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'now')
+				WHERE created_at IS NULL OR trim(created_at) = ''
+				""");
+
 		// Convert legacy epoch timestamps (seconds/milliseconds) to ISO date.
 		jdbcTemplate.execute(
 				"UPDATE cliente "

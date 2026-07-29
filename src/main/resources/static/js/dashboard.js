@@ -3,7 +3,6 @@ window.addEventListener("DOMContentLoaded", function () {
     const leads = [];
     const chamados = [];
     const vendedores = [];
-    const CHAVE_ABA_ATIVA = "gestao.dashboard.abaAtiva";
     const contextoMeta = document.querySelector('meta[name="app-context-path"]');
     const contextoAplicacao = (contextoMeta ? contextoMeta.getAttribute("content") : "") || "";
     const contextoNormalizado = contextoAplicacao === "/"
@@ -27,9 +26,6 @@ window.addEventListener("DOMContentLoaded", function () {
     };
 
     const elementos = {
-        kpiClientes: document.getElementById("kpi-clientes"),
-        kpiReceita: document.getElementById("kpi-receita"),
-        kpiDominios: document.getElementById("kpi-dominios"),
         dominiosAlerta: document.getElementById("dominios-alerta"),
         navTabs: Array.from(document.querySelectorAll(".nav-tab")),
         tabPanels: Array.from(document.querySelectorAll(".tab-panel")),
@@ -118,6 +114,7 @@ window.addEventListener("DOMContentLoaded", function () {
     let vendedorSelecionado = null;
     let vendedorEmEdicaoId = null;
     let chamadoEmEdicao = null;
+    let resumoPainel = null;
 
     const nomesMeses = [
         "Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho",
@@ -132,36 +129,28 @@ window.addEventListener("DOMContentLoaded", function () {
         elementos.tabPanels.forEach(function (panel) {
             panel.classList.toggle("active", panel.id === tabId);
         });
-
-        try {
-            window.localStorage.setItem(CHAVE_ABA_ATIVA, tabId);
-        } catch (error) {
-            // Ignore storage failures and keep navigation working.
-        }
-    };
-
-    const obterAbaInicial = function () {
-        const abaPadrao = "tab-clientes";
-        const abasDisponiveis = new Set(elementos.tabPanels.map(function (panel) {
-            return panel.id;
-        }));
-
-        try {
-            const abaSalva = window.localStorage.getItem(CHAVE_ABA_ATIVA);
-            if (abaSalva && abasDisponiveis.has(abaSalva)) {
-                return abaSalva;
-            }
-        } catch (error) {
-            // Ignore storage failures and use default tab.
-        }
-
-        return abaPadrao;
     };
 
     const formatarMoeda = function (valor) {
         const numero = Number(valor);
         const valorNormalizado = Number.isFinite(numero) ? numero : 0;
         return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valorNormalizado);
+    };
+
+    const formatarDataHora = function (isoTimestamp) {
+        if (!isoTimestamp) {
+            return "Não informado";
+        }
+
+        const data = new Date(isoTimestamp);
+        if (Number.isNaN(data.getTime())) {
+            return "Não informado";
+        }
+
+        return new Intl.DateTimeFormat("pt-BR", {
+            dateStyle: "short",
+            timeStyle: "short"
+        }).format(data);
     };
 
     const formatarData = function (isoDate) {
@@ -706,6 +695,7 @@ window.addEventListener("DOMContentLoaded", function () {
             elementos.leadForm.reset();
         }
         setLeadFeedback("Lead excluido com sucesso.", false);
+        await carregarResumoBackend();
     };
 
     const setCadastroFeedback = function (mensagem, erro) {
@@ -812,6 +802,41 @@ window.addEventListener("DOMContentLoaded", function () {
         return response.json();
     };
 
+    const carregarResumoBackend = async function () {
+        const feedback = document.getElementById("resumo-feedback");
+        if (!window.GestaoResumo) {
+            if (feedback) {
+                feedback.textContent = "Não foi possível inicializar o resumo.";
+            }
+            return;
+        }
+
+        try {
+            if (!resumoPainel) {
+                resumoPainel = window.GestaoResumo.criarPainel({
+                    document: document,
+                    Chart: window.Chart,
+                    buscarJson: buscarJson,
+                    formatarMoeda: formatarMoeda,
+                    formatarDataHora: formatarDataHora
+                });
+            }
+
+            await resumoPainel.carregar();
+        } catch (error) {
+            if (feedback) {
+                feedback.textContent = "Não foi possível carregar o resumo agora.";
+            }
+        }
+    };
+
+    const sincronizarClientesEResumo = function () {
+        return window.GestaoDashboardAsync.sincronizarListaEResumo({
+            recarregarLista: carregarClientesBackend,
+            atualizarResumo: carregarResumoBackend
+        });
+    };
+
     const obterMensagemErroApi = async function (response, fallbackMessage) {
         try {
             const data = await response.json();
@@ -831,12 +856,6 @@ window.addEventListener("DOMContentLoaded", function () {
         return fallbackMessage + " (HTTP " + response.status + ")";
     };
 
-    const obterReceitaMensal = function () {
-        return clientes.reduce(function (acc, cliente) {
-            return cliente.ativo ? acc + cliente.valorMensal : acc;
-        }, 0);
-    };
-
     const obterClientesOrdenadosParaLista = function () {
         return clientes.slice().sort(function (a, b) {
             if (a.ativo !== b.ativo) {
@@ -845,18 +864,6 @@ window.addEventListener("DOMContentLoaded", function () {
 
             return a.nome.localeCompare(b.nome, "pt-BR");
         });
-    };
-
-    const atualizarKpis = function () {
-        const totalClientes = clientes.length;
-        const totalReceita = obterReceitaMensal();
-        const dominiosAtivos = clientes.filter(function (cliente) {
-            return cliente.ativo;
-        }).length;
-
-        elementos.kpiClientes.textContent = String(totalClientes);
-        elementos.kpiReceita.textContent = formatarMoeda(totalReceita);
-        elementos.kpiDominios.textContent = String(dominiosAtivos);
     };
 
     const renderDetalhe = function (cliente) {
@@ -1274,13 +1281,15 @@ window.addEventListener("DOMContentLoaded", function () {
         clienteSelecionado = null;
         clienteEmEdicaoId = null;
         atualizarModoCadastro();
-        await carregarClientesBackend();
-        atualizarKpis();
+        const sincronizacao = await sincronizarClientesEResumo();
         renderAlertasDominio();
         renderLista();
         renderDetalhe(null);
         elementos.reciboPreview.innerHTML = "<p>O recibo sera preenchido automaticamente com os dados do cliente selecionado.</p>";
-        setDetalheFeedback("Cliente excluido com sucesso.", false);
+        const mensagem = sincronizacao.listaSincronizada
+            ? "Cliente excluido com sucesso."
+            : "Cliente excluido com sucesso. Não foi possível sincronizar a lista de clientes agora.";
+        setDetalheFeedback(mensagem, false);
     };
 
     const renderLeads = function () {
@@ -1623,6 +1632,7 @@ window.addEventListener("DOMContentLoaded", function () {
         if (elementos.leadForm) {
             elementos.leadForm.reset();
         }
+        await carregarResumoBackend();
     };
 
     const excluirLeadSelecionado = async function () {
@@ -1643,6 +1653,7 @@ window.addEventListener("DOMContentLoaded", function () {
             elementos.leadForm.reset();
         }
         setLeadFeedback("Lead excluido com sucesso.", false);
+        await carregarResumoBackend();
     };
 
     const renderLista = function () {
@@ -1880,8 +1891,6 @@ window.addEventListener("DOMContentLoaded", function () {
         clienteCriado.valorMensal = valorMensal;
         clienteCriado.informacoesUteis = informacoesUteis;
 
-        await carregarClientesBackend();
-
         if (elementos.cadastroForm) {
             elementos.cadastroForm.reset();
         }
@@ -1899,13 +1908,16 @@ window.addEventListener("DOMContentLoaded", function () {
             }
         }
 
+        const sincronizacao = await sincronizarClientesEResumo();
+        if (!sincronizacao.listaSincronizada) {
+            mensagemCadastro += " Não foi possível sincronizar a lista de clientes agora.";
+        }
         limparImportacaoLead();
 
         clienteEmEdicaoId = null;
         atualizarModoCadastro();
         popularSelectVendedoresCliente();
 
-        atualizarKpis();
         renderAlertasDominio();
         renderLista();
         setCadastroFeedback(mensagemCadastro, exclusaoLeadFalhou);
@@ -2141,7 +2153,12 @@ window.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    const iniciarPainel = async function () {
+    const iniciarPainel = function () {
+        ativarAba("tab-resumo");
+
+        return window.GestaoDashboardAsync.executarComTarefaEmSegundoPlano(
+            carregarResumoBackend,
+            async function () {
         try {
             await carregarVendedoresBackend();
         } catch (error) {
@@ -2154,7 +2171,6 @@ window.addEventListener("DOMContentLoaded", function () {
             setCadastroFeedback("Nao foi possivel carregar clientes do backend no momento.", true);
         }
 
-        atualizarKpis();
         renderAlertasDominio();
         renderLista();
         renderDetalhe(null);
@@ -2163,7 +2179,6 @@ window.addEventListener("DOMContentLoaded", function () {
         atualizarModoVendedor();
         atualizarModoLead();
         atualizarContadorChamadosAbertos();
-        ativarAba(obterAbaInicial());
         definirModoRelatorio("mensal");
         try {
             await gerarRelatorioMensal();
@@ -2190,6 +2205,7 @@ window.addEventListener("DOMContentLoaded", function () {
         renderLeads();
         renderChamados();
         renderVendedores();
+            });
     };
 
     iniciarPainel();

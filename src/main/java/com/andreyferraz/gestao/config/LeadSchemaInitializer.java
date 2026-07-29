@@ -33,6 +33,19 @@ public class LeadSchemaInitializer {
 				"UPDATE lead "
 						+ "SET updated_at = STRFTIME('%Y-%m-%d %H:%M:%f', 'now') "
 						+ "WHERE updated_at IS NULL OR trim(updated_at) = ''");
+
+		if (!hasColumn(LEAD_TABLE, "created_at")) {
+			jdbcTemplate.execute("ALTER TABLE lead ADD COLUMN created_at TEXT");
+		}
+
+		jdbcTemplate.execute("""
+				UPDATE lead
+				SET created_at = COALESCE(
+					STRFTIME('%Y-%m-%dT%H:%M:%fZ', updated_at),
+					STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'now')
+				)
+				WHERE created_at IS NULL OR trim(created_at) = ''
+				""");
 	}
 
 	private boolean hasColumn(String tableName, String columnName) {

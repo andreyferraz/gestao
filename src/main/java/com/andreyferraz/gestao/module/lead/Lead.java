@@ -32,6 +32,9 @@ public class Lead {
 
 	private String observacoes;
 
+	@Column("created_at")
+	private String createdAt;
+
 	@Column("updated_at")
 	private String updatedAt;
 }

@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS cliente (
 	valor_mensal NUMERIC NOT NULL DEFAULT 0,
 	ativo INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1)),
 	vendedor_id TEXT,
+	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (vendedor_id) REFERENCES vendedor(id)
 );
 
@@ -44,6 +45,7 @@ CREATE TABLE IF NOT EXISTS lead (
 	orcamento_desenvolvimento NUMERIC NOT NULL DEFAULT 0,
 	orcamento_manutencao_hospedagem NUMERIC NOT NULL DEFAULT 0,
 	observacoes TEXT,
+	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -19,7 +19,13 @@
         </div>
 
         <nav class="side-nav" aria-label="Abas do painel">
-            <button type="button" class="nav-tab active" data-tab-target="tab-clientes">
+            <button type="button" class="nav-tab active" data-tab-target="tab-resumo">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 13h6V4H4v9zM14 20h6V11h-6v9zM4 20h6v-3H4v3zM14 7h6V4h-6v3z"/>
+                </svg>
+                <span>Resumo</span>
+            </button>
+            <button type="button" class="nav-tab" data-tab-target="tab-clientes">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
                 <span>Clientes</span>
             </button>
@@ -57,23 +63,53 @@
     </aside>
 
     <main class="main-content">
-        <section class="kpi-row" aria-label="Resumo financeiro mensal">
-            <article class="kpi">
-                <h2>Total de Clientes</h2>
-                <p id="kpi-clientes">0</p>
-            </article>
-            <article class="kpi">
-                <h2>Receita Mensal Total</h2>
-                <p id="kpi-receita">R$ 0,00</p>
-            </article>
-            <article class="kpi">
-                <h2>Dominios Ativos</h2>
-                <p id="kpi-dominios">0</p>
-            </article>
-        </section>
-
         <section class="tab-panels">
-            <article id="tab-clientes" class="panel tab-panel active">
+            <article id="tab-resumo" class="panel tab-panel active">
+                <div class="panel-head">
+                    <h3>Resumo</h3>
+                    <span class="chip">Visão geral</span>
+                </div>
+                <p class="panel-sub">Indicadores e cadastros mais recentes do painel.</p>
+                <p id="resumo-feedback" class="obs" aria-live="polite"></p>
+
+                <section class="kpi-row" aria-label="Resumo financeiro mensal">
+                    <article class="kpi">
+                        <h2>Total de Clientes</h2>
+                        <p id="kpi-clientes">0</p>
+                    </article>
+                    <article class="kpi">
+                        <h2>Receita Mensal Total</h2>
+                        <p id="kpi-receita">R$ 0,00</p>
+                    </article>
+                    <article class="kpi">
+                        <h2>Domínios Ativos</h2>
+                        <p id="kpi-dominios">0</p>
+                    </article>
+                </section>
+
+                <div class="resumo-grid">
+                    <section class="resumo-card resumo-grafico-card">
+                        <h4>Clientes ativos por valor mensal</h4>
+                        <div class="resumo-grafico-wrap">
+                            <canvas id="resumo-grafico"
+                                    role="img"
+                                    aria-label="Distribuição de clientes ativos por valor mensal"></canvas>
+                            <p id="resumo-grafico-estado" class="resumo-vazio"></p>
+                        </div>
+                        <ul id="resumo-grafico-legenda" class="resumo-legenda"></ul>
+                    </section>
+                    <section class="resumo-card">
+                        <h4>Últimos clientes cadastrados</h4>
+                        <ul id="resumo-clientes-lista" class="resumo-lista"></ul>
+                    </section>
+                    <section class="resumo-card">
+                        <h4>Últimos leads cadastrados</h4>
+                        <ul id="resumo-leads-lista" class="resumo-lista"></ul>
+                    </section>
+                </div>
+            </article>
+
+            <article id="tab-clientes" class="panel tab-panel">
                 <div class="panel-head">
                     <h3>Clientes</h3>
                     <span class="chip">Backend</span>
@@ -319,7 +355,10 @@
         </div>
     </dialog>
 </div>
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script defer src="/js/resumo.js?v=1" th:src="@{/js/resumo.js(v=1)}"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script defer src="/js/dashboard.js?v=19" th:src="@{/js/dashboard.js(v=19)}"></script>
+<script defer src="/js/dashboard-async.js?v=1" th:src="@{/js/dashboard-async.js(v=1)}"></script>
+<script defer src="/js/dashboard.js?v=20" th:src="@{/js/dashboard.js(v=20)}"></script>
 </body>
 </html>

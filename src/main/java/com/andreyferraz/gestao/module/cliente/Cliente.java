@@ -42,4 +42,7 @@ public class Cliente {
 	@Column("vendedor_id")
 	private UUID vendedorId;
 
+	@Column("created_at")
+	private String createdAt;
+
 }

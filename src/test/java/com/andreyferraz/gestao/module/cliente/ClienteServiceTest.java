@@ -1,6 +1,7 @@
 package com.andreyferraz.gestao.module.cliente;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,9 +12,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -58,7 +61,7 @@ class ClienteServiceTest {
         assertEquals(input.getInformacoesUteis(), result.getInformacoesUteis());
         assertEquals(input.getValorMensal(), result.getValorMensal());
         assertEquals(input.getAtivo(), result.getAtivo());
-        verify(clienteRepository).inserir(any(UUID.class), eq("Nome"), eq("contato"), eq("dominio"), eq(LocalDate.of(2026, 1, 1)), eq("infos importantes"), eq(BigDecimal.valueOf(100)), eq(1), isNull());
+        verify(clienteRepository).inserir(any(UUID.class), eq("Nome"), eq("contato"), eq("dominio"), eq(LocalDate.of(2026, 1, 1)), eq("infos importantes"), eq(BigDecimal.valueOf(100)), eq(1), isNull(), any(String.class));
     }
 
     @Test
@@ -78,6 +81,36 @@ class ClienteServiceTest {
         assertEquals(input.getId(), result.getId());
         assertEquals(BigDecimal.ZERO, result.getValorMensal());
         assertEquals(0, result.getAtivo());
+    }
+
+    @Test
+    void criar_deveDefinirDataOriginalEmUtc() {
+        var input = clienteValido();
+
+        var result = clienteService.criar(input);
+
+        assertNotNull(result.getCreatedAt());
+        assertDoesNotThrow(() -> Instant.parse(result.getCreatedAt()));
+        verify(clienteRepository).inserir(
+                eq(result.getId()), eq(result.getNome()), eq(result.getContato()),
+                eq(result.getDominioAplicacao()), eq(result.getDataVencimentoDominio()),
+                eq(result.getInformacoesUteis()), eq(result.getValorMensal()),
+                eq(result.getAtivo()), isNull(), eq(result.getCreatedAt()));
+    }
+
+    @Test
+    void atualizar_devePreservarDataOriginal() {
+        UUID id = UUID.randomUUID();
+        var existente = clienteValido();
+        existente.setId(id);
+        existente.setCreatedAt("2026-06-01T10:00:00Z");
+        var alterado = clienteValido();
+        alterado.setCreatedAt("2099-01-01T00:00:00Z");
+        when(clienteRepository.findById(id)).thenReturn(Optional.of(existente));
+
+        var result = clienteService.atualizar(id, alterado);
+
+        assertEquals("2026-06-01T10:00:00Z", result.getCreatedAt());
     }
 
     @Test
@@ -151,6 +184,19 @@ class ClienteServiceTest {
         assertEquals("informacao extra", resumo.get(0).informacoesUteis());
         assertTrue(resumo.get(0).ativo());
         assertEquals(50.0, resumo.get(0).valorMensal());
+    }
+
+    private Cliente clienteValido() {
+        var cliente = new Cliente();
+        cliente.setNome("Nome");
+        cliente.setContato("contato");
+        cliente.setDominioAplicacao("dominio");
+        cliente.setDataVencimentoDominio(LocalDate.of(2026, 1, 1));
+        cliente.setInformacoesUteis("informacoes");
+        cliente.setValorMensal(new BigDecimal("100.00"));
+        cliente.setAtivo(1);
+        cliente.setVendedorId(null);
+        return cliente;
     }
 
 }

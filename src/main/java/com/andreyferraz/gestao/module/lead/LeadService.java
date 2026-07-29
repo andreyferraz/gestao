@@ -1,6 +1,7 @@
 package com.andreyferraz.gestao.module.lead;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -20,6 +21,7 @@ public class LeadService {
 		if (lead.getId() == null) {
 			lead.setId(UUID.randomUUID());
 		}
+		lead.setCreatedAt(Instant.now().toString());
 
 		leadRepository.inserir(
 				lead.getId(),
@@ -27,7 +29,8 @@ public class LeadService {
 				lead.getTelefone(),
 				lead.getOrcamentoDesenvolvimento() != null ? lead.getOrcamentoDesenvolvimento() : BigDecimal.ZERO,
 				lead.getOrcamentoManutencaoHospedagem() != null ? lead.getOrcamentoManutencaoHospedagem() : BigDecimal.ZERO,
-				lead.getObservacoes());
+				lead.getObservacoes(),
+				lead.getCreatedAt());
 
 		return buscarPorId(lead.getId());
 	}

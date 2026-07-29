@@ -1,6 +1,7 @@
 package com.andreyferraz.gestao.module.cliente;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -27,6 +28,7 @@ public class ClienteService {
 		if (cliente.getId() == null) {
 			cliente.setId(UUID.randomUUID());
 		}
+		cliente.setCreatedAt(Instant.now().toString());
 		normalizarClienteParaPersistencia(cliente);
 
 		clienteRepository.inserir(
@@ -38,7 +40,8 @@ public class ClienteService {
 				cliente.getInformacoesUteis(),
 				cliente.getValorMensal() != null ? cliente.getValorMensal() : BigDecimal.ZERO,
 				cliente.getAtivo() != null && cliente.getAtivo() == 1 ? 1 : 0,
-				validarVendedor(cliente.getVendedorId()));
+				validarVendedor(cliente.getVendedorId()),
+				cliente.getCreatedAt());
 
 		return cliente;
 	}
@@ -85,9 +88,10 @@ public class ClienteService {
 
 	@Transactional
 	public Cliente atualizar(UUID id, Cliente clienteAtualizado) {
-		clienteRepository.findById(id)
+		Cliente existente = clienteRepository.findById(id)
 				.orElseThrow(() -> new NoSuchElementException("Cliente nao encontrado para o id: " + id));
 		clienteAtualizado.setId(id);
+		clienteAtualizado.setCreatedAt(existente.getCreatedAt());
 		normalizarClienteParaPersistencia(clienteAtualizado);
 
 		clienteRepository.atualizar(
