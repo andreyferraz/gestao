@@ -56,3 +56,11 @@ CREATE TABLE IF NOT EXISTS chamado (
 	status TEXT NOT NULL CHECK (status IN ('ABERTO', 'RESOLVIDO')),
 	FOREIGN KEY (cliente_id) REFERENCES cliente(id)
 );
+
+CREATE TABLE IF NOT EXISTS projeto (
+	id TEXT PRIMARY KEY,
+	titulo TEXT NOT NULL,
+	descricao TEXT,
+	imagem_url TEXT,
+	link TEXT
+);
