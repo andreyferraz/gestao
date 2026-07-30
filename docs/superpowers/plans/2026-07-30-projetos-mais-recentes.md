@@ -1,24 +1,24 @@
-# Projetos mais recentes primeiro — Implementation Plan
+# Projetos alterados mais recentemente primeiro — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Fazer `GET /api/projetos` entregar projetos por criação decrescente para que a paginação do consumidor coloque novos projetos na primeira página.
+**Goal:** Fazer `GET /api/projetos` entregar projetos por última alteração decrescente para que a paginação do consumidor coloque projetos novos ou editados na primeira página.
 
-**Architecture:** A criação persistirá um instante UTC em `projeto.created_at`; a migração SQLite preencherá registros legados e o schema de teste também conterá a coluna. Uma consulta explícita no repositório aplicará `ORDER BY created_at DESC, id DESC`, sem expor a data no contrato JSON nem alterá-la em edições.
+**Architecture:** Criações e edições persistirão um instante UTC em `projeto.updated_at`; a migração SQLite preencherá registros legados e o schema de teste também conterá a coluna. Uma consulta explícita no repositório aplicará `ORDER BY updated_at DESC, id DESC`, sem expor a data no contrato JSON.
 
 **Tech Stack:** Java 17, Spring Boot, Spring Data JDBC, SQLite, H2 e JUnit 5.
 
 ## Global Constraints
 
-- “Mais recente” significa criado por último.
-- Editar um projeto não altera sua posição.
+- “Mais recente” significa criado ou editado por último.
+- Uma edição só reposiciona o projeto quando for persistida com sucesso.
 - A paginação continua no site externo.
 - O formato JSON público não muda.
-- `created_at` não será exposto na resposta.
+- `updated_at` não será exposto na resposta.
 
 ---
 
-### Task 1: Coluna de criação e migração SQLite
+### Task 1: Coluna de última alteração e migração SQLite
 
 **Files:**
 - Modify: `src/main/resources/schema.sql`
@@ -27,15 +27,15 @@
 
 **Interfaces:**
 - Consumes: `ProjetoSchemaInitializer(JdbcTemplate)` e `ensureProjetoTable()`.
-- Produces: coluna SQL `projeto.created_at TEXT`, preenchida para linhas legadas.
+- Produces: coluna SQL `projeto.updated_at TEXT`, preenchida para linhas legadas.
 
 - [ ] **Step 1: Escrever testes que falham para banco novo e migração**
 
-Atualizar o teste de estrutura para esperar `created_at` após `link` e criar:
+Atualizar o teste de estrutura para esperar `updated_at` após `link` e criar:
 
 ```java
 @Test
-void sqliteComTabelaLegada_deveAdicionarEPreencherCreatedAt() {
+void sqliteComTabelaLegada_deveAdicionarEPreencherUpdatedAt() {
     jdbcTemplate.execute("""
             CREATE TABLE projeto (
                 id TEXT PRIMARY KEY,
@@ -53,13 +53,13 @@ void sqliteComTabelaLegada_deveAdicionarEPreencherCreatedAt() {
     new ProjetoSchemaInitializer(jdbcTemplate).ensureProjetoTable();
 
     assertThat(jdbcTemplate.queryForObject(
-            "SELECT created_at FROM projeto WHERE id = 'legado'", String.class))
+            "SELECT updated_at FROM projeto WHERE id = 'legado'", String.class))
             .isNotBlank();
 }
 ```
 
 No teste que insere um projeto depois da criação da tabela, incluir
-`created_at` explicitamente no `INSERT`, pois a aplicação — e não o banco —
+`updated_at` explicitamente no `INSERT`, pois a aplicação — e não o banco —
 será responsável por fornecer esse valor.
 
 - [ ] **Step 2: Executar o teste e confirmar a falha**
@@ -70,24 +70,24 @@ Run:
 ./mvnw -Dtest=ProjetoSchemaInitializerTest test
 ```
 
-Expected: FAIL porque a tabela criada e a tabela legada ainda não recebem `created_at`.
+Expected: FAIL porque a tabela criada e a tabela legada ainda não recebem `updated_at`.
 
 - [ ] **Step 3: Implementar a coluna e a migração mínima**
 
 Acrescentar ao `CREATE TABLE` do initializer e de `schema.sql`:
 
 ```sql
-created_at TEXT NOT NULL
+updated_at TEXT NOT NULL
 ```
 
 Depois do `CREATE TABLE IF NOT EXISTS`, detectar a coluna com `PRAGMA table_info(projeto)`. Quando ausente:
 
 ```java
-jdbcTemplate.execute("ALTER TABLE projeto ADD COLUMN created_at TEXT");
+jdbcTemplate.execute("ALTER TABLE projeto ADD COLUMN updated_at TEXT");
 jdbcTemplate.update("""
         UPDATE projeto
-        SET created_at = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'now')
-        WHERE created_at IS NULL OR trim(created_at) = ''
+        SET updated_at = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'now')
+        WHERE updated_at IS NULL OR trim(updated_at) = ''
         """);
 ```
 
@@ -109,7 +109,7 @@ Expected: PASS.
 git add src/main/resources/schema.sql \
   src/main/java/com/andreyferraz/gestao/config/ProjetoSchemaInitializer.java \
   src/test/java/com/andreyferraz/gestao/config/ProjetoSchemaInitializerTest.java
-git commit -m "feat: add project creation timestamp"
+git commit -m "feat: add project update timestamp"
 ```
 
 ### Task 2: Persistência e listagem ordenada
@@ -121,8 +121,8 @@ git commit -m "feat: add project creation timestamp"
 - Test: `src/test/java/com/andreyferraz/gestao/module/website/projeto/ProjetoServiceTest.java`
 
 **Interfaces:**
-- Consumes: tabela `projeto` com `created_at`.
-- Produces: `void inserir(UUID id, String titulo, String descricao, String imagemUrl, String link, String createdAt)` e `List<Projeto> findAllOrderByCriacaoRecente()`.
+- Consumes: tabela `projeto` com `updated_at`.
+- Produces: métodos de inserção/edição com `String updatedAt` e `List<Projeto> findAllOrderByAtualizacaoRecente()`.
 
 - [ ] **Step 1: Escrever o teste de repositório que falha**
 
@@ -130,7 +130,7 @@ Criar um teste com datas explícitas:
 
 ```java
 @Test
-void findAllOrderByCriacaoRecente_deveRetornarMaisNovoPrimeiro() {
+void findAllOrderByAtualizacaoRecente_deveRetornarMaisNovoPrimeiro() {
     UUID antigo = UUID.randomUUID();
     UUID recente = UUID.randomUUID();
     repository.inserir(
@@ -142,13 +142,15 @@ void findAllOrderByCriacaoRecente_deveRetornarMaisNovoPrimeiro() {
 
     assertEquals(
             java.util.List.of(recente, antigo),
-            repository.findAllOrderByCriacaoRecente().stream()
+            repository.findAllOrderByAtualizacaoRecente().stream()
                     .map(Projeto::getId)
                     .toList());
 }
 ```
 
 Atualizar as chamadas já existentes a `inserir` com uma data UTC fixa.
+No teste de `atualizar`, consultar `updated_at` com `JdbcTemplate` e comprovar
+que ele recebeu o novo valor passado ao método.
 
 - [ ] **Step 2: Escrever o teste de serviço que falha**
 
@@ -156,21 +158,21 @@ Substituir o teste atual de listagem por:
 
 ```java
 @Test
-void listarProjetos_deveUsarOrdemDeCriacaoRecenteDoRepositorio() {
+void listarProjetos_deveUsarOrdemDeAtualizacaoRecenteDoRepositorio() {
     Projeto recente = projetoValido();
     Projeto antigo = new Projeto(
             null, "Outro", "Outra descrição", "outra.webp",
             "https://other.example.com");
-    when(repository.findAllOrderByCriacaoRecente())
+    when(repository.findAllOrderByAtualizacaoRecente())
             .thenReturn(List.of(recente, antigo));
 
     assertEquals(List.of(recente, antigo), service.listarProjetos());
-    verify(repository).findAllOrderByCriacaoRecente();
+    verify(repository).findAllOrderByAtualizacaoRecente();
 }
 ```
 
-Atualizar os `verify` e `doThrow` de criação para a assinatura de seis argumentos,
-usando `anyString()` no instante.
+Atualizar os `verify` e `doThrow` de criação para a assinatura de seis argumentos.
+Nos testes de edição, verificar também o argumento `updatedAt` com `anyString()`.
 
 - [ ] **Step 3: Executar os testes e confirmar as falhas**
 
@@ -190,33 +192,34 @@ No repositório:
 @Modifying
 @Query("""
         INSERT INTO projeto (
-            id, titulo, descricao, imagem_url, link, created_at
+            id, titulo, descricao, imagem_url, link, updated_at
         )
-        VALUES (:id, :titulo, :descricao, :imagemUrl, :link, :createdAt)
+        VALUES (:id, :titulo, :descricao, :imagemUrl, :link, :updatedAt)
         """)
 void inserir(
         UUID id, String titulo, String descricao,
-        String imagemUrl, String link, String createdAt);
+        String imagemUrl, String link, String updatedAt);
 
 @Query("""
         SELECT id, titulo, descricao, imagem_url, link
         FROM projeto
-        ORDER BY created_at DESC, id DESC
+        ORDER BY updated_at DESC, id DESC
         """)
-List<Projeto> findAllOrderByCriacaoRecente();
+List<Projeto> findAllOrderByAtualizacaoRecente();
 ```
 
 Adicionar `java.util.List` aos imports do repositório.
 
-No serviço, passar `Instant.now().toString()` na criação e trocar a listagem por:
+Adicionar `updated_at = :updatedAt` às duas consultas de atualização e o
+parâmetro `String updatedAt` às assinaturas correspondentes. No serviço, passar
+`Instant.now().toString()` na criação e em cada edição, e trocar a listagem por:
 
 ```java
-return projetoRepository.findAllOrderByCriacaoRecente();
+return projetoRepository.findAllOrderByAtualizacaoRecente();
 ```
 
-Não adicionar `created_at` às consultas de atualização.
 Nos dois testes de compatibilidade que inserem linhas diretamente com
-`JdbcTemplate`, acrescentar `created_at` e uma data UTC fixa para satisfazer o
+`JdbcTemplate`, acrescentar `updated_at` e uma data UTC fixa para satisfazer o
 novo schema de teste.
 
 - [ ] **Step 5: Executar os testes focados**
