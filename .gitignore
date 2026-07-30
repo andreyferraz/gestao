@@ -39,3 +39,6 @@ src/main/resources/application-*.properties
 
 ### Banco local ###
 gestao.db
+
+### Uploads locais ###
+/uploads/

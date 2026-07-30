@@ -65,6 +65,12 @@
 			<artifactId>sqlite-jdbc</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.github.usefulness</groupId>
+			<artifactId>webp-imageio</artifactId>
+			<version>0.11.0</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jdbc-test</artifactId>
 			<scope>test</scope>

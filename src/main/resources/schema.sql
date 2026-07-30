@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 	username TEXT NOT NULL UNIQUE,
 	senha TEXT NOT NULL,
 	ativo INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1)),
-	role TEXT NOT NULL DEFAULT 'ADMIN'
+	role TEXT NOT NULL DEFAULT 'USER'
 );
 
 CREATE TABLE IF NOT EXISTS lead (
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS chamado (
 CREATE TABLE IF NOT EXISTS projeto (
 	id TEXT PRIMARY KEY,
 	titulo TEXT NOT NULL,
-	descricao TEXT,
-	imagem_url TEXT,
-	link TEXT
+	descricao TEXT NOT NULL,
+	imagem_url TEXT NOT NULL,
+	link TEXT NOT NULL
 );
