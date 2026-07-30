@@ -61,6 +61,39 @@ class FakeFormData {
     }
 }
 
+function criarFakeQuill() {
+    const instancias = [];
+
+    class FakeQuill {
+        constructor(elemento, config) {
+            this.elemento = elemento;
+            this.config = config;
+            this.root = { innerHTML: "<p><br></p>" };
+            this.texto = "\n";
+            this.clipboard = {
+                dangerouslyPasteHTML: (html) => {
+                    this.root.innerHTML = html;
+                    this.texto = html.replace(/<[^>]+>/g, "") + "\n";
+                }
+            };
+            instancias.push(this);
+        }
+
+        getText() {
+            return this.texto;
+        }
+
+        setText(texto) {
+            this.texto = texto;
+            this.root.innerHTML = texto
+                ? "<p>" + texto + "</p>"
+                : "<p><br></p>";
+        }
+    }
+
+    return { Quill: FakeQuill, instancias: instancias };
+}
+
 function respostaJson(status, payload) {
     return {
         ok: status >= 200 && status < 300,
@@ -85,6 +118,9 @@ function criarAmbiente(opcoes) {
         "projeto-form",
         "projeto-titulo",
         "projeto-descricao",
+        "projeto-editor-container",
+        "projeto-editor",
+        "projeto-editor-feedback",
         "projeto-link",
         "projeto-imagem",
         "projeto-salvar",
@@ -96,6 +132,8 @@ function criarAmbiente(opcoes) {
     const elementos = Object.fromEntries(ids.map(function (id) {
         return [id, new FakeElement(id)];
     }));
+    elementos["projeto-descricao"].required = true;
+    elementos["projeto-editor-container"].hidden = true;
     elementos["projeto-imagem"].required = true;
     elementos["projeto-cancelar"].hidden = true;
     elementos["projeto-salvar"].textContent = "Salvar projeto";
@@ -139,6 +177,7 @@ function criarAmbiente(opcoes) {
         confirmacoes: confirmacoes,
         document: document,
         FormData: FakeFormData,
+        Quill: config.Quill,
         confirm: function (mensagem) {
             confirmacoes.push(mensagem);
             return config.confirmar !== false;
@@ -158,7 +197,8 @@ function criarPainel(ambiente) {
         document: ambiente.document,
         fetch: ambiente.fetch,
         confirm: ambiente.confirm,
-        FormData: ambiente.FormData
+        FormData: ambiente.FormData,
+        Quill: ambiente.Quill
     });
 }
 
@@ -179,6 +219,180 @@ function preencherCampos(ambiente, opcoes) {
     ambiente.elementos["projeto-imagem"].files = opcoes && opcoes.imagem
         ? [opcoes.imagem] : [];
 }
+
+test("Quill inicia com Snow e somente a barra aprovada", function () {
+    const quill = criarFakeQuill();
+    const ambiente = criarAmbiente({ Quill: quill.Quill });
+
+    criarPainel(ambiente);
+
+    assert.equal(quill.instancias.length, 1);
+    assert.equal(quill.instancias[0].config.theme, "snow");
+    assert.deepEqual(quill.instancias[0].config.formats, [
+        "header", "bold", "italic", "underline",
+        "list", "blockquote", "link"
+    ]);
+    assert.deepEqual(quill.instancias[0].config.modules.toolbar, [
+        [{ header: [2, 3, false] }],
+        ["bold", "italic", "underline"],
+        [{ list: "ordered" }, { list: "bullet" }],
+        ["blockquote", "link"],
+        ["clean"]
+    ]);
+    assert.equal(
+        ambiente.elementos["projeto-editor-container"].hidden,
+        false);
+    assert.equal(ambiente.elementos["projeto-descricao"].hidden, true);
+    assert.equal(ambiente.elementos["projeto-descricao"].required, false);
+});
+
+test("sem Quill mantém textarea e informa fallback", function () {
+    const ambiente = criarAmbiente();
+
+    criarPainel(ambiente);
+
+    assert.equal(ambiente.elementos["projeto-descricao"].hidden, false);
+    assert.equal(
+        ambiente.elementos["projeto-editor-container"].hidden,
+        true);
+    assert.equal(
+        ambiente.elementos["projeto-editor-feedback"].textContent,
+        "Editor rico indisponível. Usando editor simples.");
+    assert.equal(ambiente.elementos["projeto-descricao"].required, true);
+});
+
+test("falha ao iniciar Quill retorna ao textarea", function () {
+    function QuillComFalha() {
+        throw new Error("Falha de inicialização");
+    }
+    const ambiente = criarAmbiente({ Quill: QuillComFalha });
+
+    criarPainel(ambiente);
+
+    assert.equal(ambiente.elementos["projeto-descricao"].hidden, false);
+    assert.equal(
+        ambiente.elementos["projeto-editor-container"].hidden,
+        true);
+    assert.equal(ambiente.elementos["projeto-descricao"].required, true);
+    assert.equal(
+        ambiente.elementos["projeto-editor-feedback"].textContent,
+        "Editor rico indisponível. Usando editor simples.");
+});
+
+test("salvar envia HTML produzido pelo Quill", async function () {
+    const quill = criarFakeQuill();
+    const ambiente = criarAmbiente({
+        Quill: quill.Quill,
+        respostas: [
+            respostaJson(201, projetoCompleto()),
+            respostaJson(200, [projetoCompleto()])
+        ]
+    });
+    preencherCampos(ambiente, { imagem: { name: "capa.png" } });
+    const painel = criarPainel(ambiente);
+    quill.instancias[0].root.innerHTML =
+            "<h2>Projeto</h2><p>Texto <strong>rico</strong></p>";
+    quill.instancias[0].texto = "Projeto\nTexto rico\n";
+
+    await painel.salvar({ preventDefault: function () {} });
+
+    assert.deepEqual(
+        ambiente.requisicoes[0].options.body.valores.find(function (par) {
+            return par[0] === "descricao";
+        }),
+        [
+            "descricao",
+            "<h2>Projeto</h2><p>Texto <strong>rico</strong></p>"
+        ]);
+});
+
+test("salvar rejeita Quill visualmente vazio", async function () {
+    const quill = criarFakeQuill();
+    const ambiente = criarAmbiente({ Quill: quill.Quill });
+    preencherCampos(ambiente, { imagem: { name: "capa.png" } });
+    const painel = criarPainel(ambiente);
+
+    await painel.salvar({ preventDefault: function () {} });
+
+    assert.equal(ambiente.requisicoes.length, 0);
+    assert.equal(
+        ambiente.elementos["projeto-feedback"].textContent,
+        "Informe a descrição do projeto.");
+});
+
+test("salvar rejeita espaços invisíveis no Quill", async function () {
+    const quill = criarFakeQuill();
+    const ambiente = criarAmbiente({ Quill: quill.Quill });
+    preencherCampos(ambiente, { imagem: { name: "capa.png" } });
+    const painel = criarPainel(ambiente);
+    quill.instancias[0].root.innerHTML = "<p>&nbsp;\u200B\uFEFF</p>";
+    quill.instancias[0].texto = "\u00A0\u200B\uFEFF\n";
+
+    await painel.salvar({ preventDefault: function () {} });
+
+    assert.equal(ambiente.requisicoes.length, 0);
+    assert.equal(
+        ambiente.elementos["projeto-feedback"].textContent,
+        "Informe a descrição do projeto.");
+});
+
+test("falha da API preserva o HTML do Quill", async function () {
+    const quill = criarFakeQuill();
+    const ambiente = criarAmbiente({
+        Quill: quill.Quill,
+        respostas: [respostaJson(400, { message: "Conteúdo inválido." })]
+    });
+    preencherCampos(ambiente, { imagem: { name: "capa.png" } });
+    const painel = criarPainel(ambiente);
+    quill.instancias[0].root.innerHTML = "<p>Não perder</p>";
+    quill.instancias[0].texto = "Não perder\n";
+
+    await painel.salvar({ preventDefault: function () {} });
+
+    assert.equal(ambiente.requisicoes.length, 1);
+    assert.deepEqual(
+        ambiente.requisicoes[0].options.body.valores.find(function (par) {
+            return par[0] === "descricao";
+        }),
+        ["descricao", "<p>Não perder</p>"]);
+    assert.equal(
+        ambiente.elementos["projeto-feedback"].textContent,
+        "Conteúdo inválido.");
+    assert.equal(
+        quill.instancias[0].root.innerHTML,
+        "<p>Não perder</p>");
+});
+
+test("editar carrega HTML existente no Quill", function () {
+    const quill = criarFakeQuill();
+    const ambiente = criarAmbiente({ Quill: quill.Quill });
+    const painel = criarPainel(ambiente);
+    const projeto = projetoCompleto();
+    projeto.descricao = "<h2>Existente</h2><p>Texto</p>";
+    painel.renderizar([projeto]);
+
+    painel.editar("p1");
+
+    assert.equal(
+        quill.instancias[0].root.innerHTML,
+        "<h2>Existente</h2><p>Texto</p>");
+    assert.equal(
+        ambiente.elementos["projeto-descricao"].value,
+        "<h2>Existente</h2><p>Texto</p>");
+});
+
+test("cancelar edição limpa o Quill", function () {
+    const quill = criarFakeQuill();
+    const ambiente = criarAmbiente({ Quill: quill.Quill });
+    const painel = criarPainel(ambiente);
+    painel.renderizar([projetoCompleto()]);
+    painel.editar("p1");
+
+    painel.cancelarEdicao();
+
+    assert.equal(quill.instancias[0].root.innerHTML, "<p><br></p>");
+    assert.equal(quill.instancias[0].getText(), "");
+});
 
 test("renderizar mostra somente título e ações de cada projeto", function () {
     const ambiente = criarAmbiente();

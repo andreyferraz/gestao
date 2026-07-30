@@ -21,10 +21,15 @@ public class ProjetoService {
 
     private final ProjetoRepository projetoRepository;
     private final FileUploadService fileUploadService;
+    private final ProjetoDescricaoSanitizer descricaoSanitizer;
 
-    public ProjetoService(ProjetoRepository projetoRepository, FileUploadService fileUploadService) {
+    public ProjetoService(
+            ProjetoRepository projetoRepository,
+            FileUploadService fileUploadService,
+            ProjetoDescricaoSanitizer descricaoSanitizer) {
         this.projetoRepository = projetoRepository;
         this.fileUploadService = fileUploadService;
+        this.descricaoSanitizer = descricaoSanitizer;
     }
 
     @Transactional
@@ -124,7 +129,7 @@ public class ProjetoService {
             throw new IllegalArgumentException("Projeto é obrigatório.");
         }
         validarTextoObrigatorio(projeto.getTitulo(), "Título do projeto é obrigatório.");
-        validarTextoObrigatorio(projeto.getDescricao(), "Descrição do projeto é obrigatória.");
+        projeto.setDescricao(descricaoSanitizer.sanitizar(projeto.getDescricao()));
         validarLink(projeto.getLink());
     }
 

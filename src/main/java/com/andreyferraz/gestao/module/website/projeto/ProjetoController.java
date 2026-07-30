@@ -36,10 +36,15 @@ public class ProjetoController {
 
     private final ProjetoService projetoService;
     private final FileUploadService fileUploadService;
+    private final ProjetoDescricaoSanitizer descricaoSanitizer;
 
-    public ProjetoController(ProjetoService projetoService, FileUploadService fileUploadService) {
+    public ProjetoController(
+            ProjetoService projetoService,
+            FileUploadService fileUploadService,
+            ProjetoDescricaoSanitizer descricaoSanitizer) {
         this.projetoService = projetoService;
         this.fileUploadService = fileUploadService;
+        this.descricaoSanitizer = descricaoSanitizer;
     }
 
     @GetMapping
@@ -113,7 +118,7 @@ public class ProjetoController {
         return new ProjetoResponse(
                 projeto.getId(),
                 projeto.getTitulo(),
-                projeto.getDescricao(),
+                descricaoSanitizer.sanitizar(projeto.getDescricao()),
                 imagemUrl,
                 projeto.getLink());
     }

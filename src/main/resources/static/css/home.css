@@ -1113,6 +1113,34 @@ body.dashboard-page {
     resize: vertical;
 }
 
+.dashboard-page .projeto-editor-container {
+    margin-bottom: 4px;
+}
+
+.dashboard-page .projeto-editor-container .ql-toolbar {
+    border-color: var(--line);
+    border-radius: 10px 10px 0 0;
+    background: #f8fafc;
+}
+
+.dashboard-page .projeto-editor-container .ql-container {
+    border-color: var(--line);
+    border-radius: 0 0 10px 10px;
+    background: #ffffff;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.dashboard-page .projeto-editor-container .ql-editor {
+    min-height: 150px;
+}
+
+.dashboard-page .projeto-editor-feedback {
+    color: var(--muted);
+    font-size: 12px;
+}
+
 .dashboard-page .projeto-form-acoes,
 .dashboard-page .projeto-item-acoes {
     display: flex;

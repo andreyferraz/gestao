@@ -72,4 +72,23 @@ class HomeControllerTest {
 		assertTrue(painel.contains("id=\"projetos-lista\""));
 		assertTrue(html.contains("/js/projetos.js"));
 	}
+
+	@Test
+	@WithMockUser(username = "admin")
+	void dashboard_deveCarregarQuillComFallbackParaDescricao() throws Exception {
+		String html = mockMvc.perform(get("/dashboard"))
+				.andExpect(status().isOk())
+				.andReturn()
+				.getResponse()
+				.getContentAsString();
+
+		assertTrue(html.contains(
+				"https://cdn.quilljs.com/1.3.6/quill.snow.css"));
+		assertTrue(html.contains(
+				"https://cdn.quilljs.com/1.3.6/quill.js"));
+		assertTrue(html.contains("id=\"projeto-editor-container\""));
+		assertTrue(html.contains("id=\"projeto-editor\""));
+		assertTrue(html.contains("id=\"projeto-editor-feedback\""));
+		assertTrue(html.contains("id=\"projeto-descricao\""));
+	}
 }

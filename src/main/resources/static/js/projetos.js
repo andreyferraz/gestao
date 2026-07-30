@@ -12,7 +12,8 @@
             document: root.document,
             fetch: root.fetch.bind(root),
             confirm: root.confirm.bind(root),
-            FormData: root.FormData
+            FormData: root.FormData,
+            Quill: root.Quill
         });
     });
 }(typeof window !== "undefined" ? window : globalThis, function () {
@@ -21,6 +22,9 @@
             form: doc.getElementById("projeto-form"),
             titulo: doc.getElementById("projeto-titulo"),
             descricao: doc.getElementById("projeto-descricao"),
+            editorContainer: doc.getElementById("projeto-editor-container"),
+            editor: doc.getElementById("projeto-editor"),
+            editorFeedback: doc.getElementById("projeto-editor-feedback"),
             link: doc.getElementById("projeto-link"),
             imagem: doc.getElementById("projeto-imagem"),
             salvar: doc.getElementById("projeto-salvar"),
@@ -40,6 +44,58 @@
 
         let projetos = [];
         let projetoEmEdicaoId = null;
+        let quill = null;
+
+        function informarEditor(mensagem) {
+            if (elementos.editorFeedback) {
+                elementos.editorFeedback.textContent = mensagem;
+            }
+        }
+
+        function ativarFallbackDoEditor() {
+            if (elementos.editorContainer) {
+                elementos.editorContainer.hidden = true;
+            }
+            elementos.descricao.hidden = false;
+            elementos.descricao.required = true;
+            informarEditor(
+                "Editor rico indisponível. Usando editor simples.");
+        }
+
+        function inicializarEditor() {
+            if (typeof options.Quill !== "function"
+                    || !elementos.editorContainer
+                    || !elementos.editor) {
+                ativarFallbackDoEditor();
+                return;
+            }
+
+            try {
+                quill = new options.Quill(elementos.editor, {
+                    theme: "snow",
+                    formats: [
+                        "header", "bold", "italic", "underline",
+                        "list", "blockquote", "link"
+                    ],
+                    modules: {
+                        toolbar: [
+                            [{ header: [2, 3, false] }],
+                            ["bold", "italic", "underline"],
+                            [{ list: "ordered" }, { list: "bullet" }],
+                            ["blockquote", "link"],
+                            ["clean"]
+                        ]
+                    }
+                });
+                elementos.editorContainer.hidden = false;
+                elementos.descricao.hidden = true;
+                elementos.descricao.required = false;
+                informarEditor("");
+            } catch (error) {
+                quill = null;
+                ativarFallbackDoEditor();
+            }
+        }
 
         function lerMeta(nome) {
             const meta = doc.querySelector('meta[name="' + nome + '"]');
@@ -79,8 +135,24 @@
                 : "Modo atual: novo projeto.";
         }
 
+        function preencherDescricao(html) {
+            const valor = html || "";
+            elementos.descricao.value = valor;
+            if (quill) {
+                quill.clipboard.dangerouslyPasteHTML(valor);
+            }
+        }
+
+        function limparDescricao() {
+            elementos.descricao.value = "";
+            if (quill) {
+                quill.setText("");
+            }
+        }
+
         function limparFormulario() {
             elementos.form.reset();
+            limparDescricao();
             projetoEmEdicaoId = null;
             atualizarModo();
         }
@@ -95,7 +167,7 @@
 
             projetoEmEdicaoId = projeto.id;
             elementos.titulo.value = projeto.titulo || "";
-            elementos.descricao.value = projeto.descricao || "";
+            preencherDescricao(projeto.descricao);
             elementos.link.value = projeto.link || "";
             elementos.imagem.value = "";
             atualizarModo();
@@ -145,21 +217,40 @@
             return projetos.slice();
         }
 
+        function obterDescricao() {
+            if (quill) {
+                return {
+                    html: quill.root.innerHTML,
+                    texto: quill.getText().trim()
+                };
+            }
+            const valor = elementos.descricao.value.trim();
+            return { html: valor, texto: valor };
+        }
+
         function dadosDoFormulario() {
+            const descricao = obterDescricao();
             return {
                 titulo: elementos.titulo.value.trim(),
-                descricao: elementos.descricao.value.trim(),
+                descricao: descricao.html,
+                descricaoTexto: descricao.texto,
                 link: elementos.link.value.trim(),
                 imagem: elementos.imagem.files && elementos.imagem.files[0]
                     ? elementos.imagem.files[0] : null
             };
         }
 
+        function possuiTextoVisivel(texto) {
+            return String(texto || "")
+                .replace(/[\s\u200B-\u200D\u2060\uFEFF]/g, "")
+                .length > 0;
+        }
+
         function validar(dados) {
             if (!dados.titulo) {
                 return "Informe o título do projeto.";
             }
-            if (!dados.descricao) {
+            if (!possuiTextoVisivel(dados.descricaoTexto)) {
                 return "Informe a descrição do projeto.";
             }
             if (!/^https?:\/\/.+/i.test(dados.link)) {
@@ -354,6 +445,8 @@
                 // O feedback já foi apresentado por carregar.
             });
         }
+
+        inicializarEditor();
 
         return {
             renderizar: renderizar,

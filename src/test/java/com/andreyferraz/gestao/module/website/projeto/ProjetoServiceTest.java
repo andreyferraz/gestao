@@ -18,13 +18,13 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -47,8 +47,15 @@ class ProjetoServiceTest {
     @Mock
     private MultipartFile imagem;
 
-    @InjectMocks
     private ProjetoService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new ProjetoService(
+                repository,
+                fileUploadService,
+                new ProjetoDescricaoSanitizer());
+    }
 
     @Test
     void criarProjeto_deveGerarUuidInserirERetornarProjeto() {
@@ -63,6 +70,27 @@ class ProjetoServiceTest {
         verify(repository).inserir(
                 eq(criado.getId()), eq("Titulo"), eq("Descricao"),
                 eq("nova.webp"), eq("https://example.com"));
+    }
+
+    @Test
+    void criarProjeto_deveSanitizarDescricaoAntesDePersistir() {
+        Projeto projeto = projetoValido();
+        projeto.setDescricao(
+                "<h2>Projeto</h2><p onclick=\"alert(1)\">Texto <strong>rico</strong></p>");
+        when(imagem.isEmpty()).thenReturn(false);
+        when(fileUploadService.salvarImagem(imagem)).thenReturn("nova.webp");
+
+        Projeto criado = service.criarProjeto(projeto, imagem);
+
+        assertEquals(
+                "<h2>Projeto</h2><p>Texto <strong>rico</strong></p>",
+                criado.getDescricao());
+        verify(repository).inserir(
+                eq(criado.getId()),
+                eq("Titulo"),
+                eq("<h2>Projeto</h2><p>Texto <strong>rico</strong></p>"),
+                eq("nova.webp"),
+                eq("https://example.com"));
     }
 
     @Test
@@ -196,6 +224,30 @@ class ProjetoServiceTest {
                 "Antigo", "Antes", "antiga.webp", "https://old.example.com");
         verify(fileUploadService, never()).salvarImagem(any());
         verify(fileUploadService, never()).removerImagem(any());
+    }
+
+    @Test
+    void editarProjeto_deveSanitizarDescricaoAntesDeAtualizar() {
+        UUID id = UUID.randomUUID();
+        Projeto existente = projetoExistente(id);
+        Projeto alterado = projetoValido();
+        alterado.setDescricao("<p style=\"color:red\">Nova <em>descrição</em></p>");
+        when(repository.findById(id)).thenReturn(Optional.of(existente));
+        when(repository.atualizarSeEstadoAtual(
+                id,
+                "Titulo",
+                "<p>Nova <em>descrição</em></p>",
+                "antiga.webp",
+                "https://example.com",
+                "Antigo",
+                "Antes",
+                "antiga.webp",
+                "https://old.example.com"))
+                .thenReturn(1);
+
+        Projeto resultado = service.editarProjeto(id, alterado, null);
+
+        assertEquals("<p>Nova <em>descrição</em></p>", resultado.getDescricao());
     }
 
     @Test

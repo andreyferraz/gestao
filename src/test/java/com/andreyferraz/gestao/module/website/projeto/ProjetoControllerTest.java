@@ -48,7 +48,11 @@ import com.andreyferraz.gestao.module.usuario.UsuarioRepository;
 
 @WebMvcTest(ProjetoController.class)
 @AutoConfigureMockMvc
-@Import({ GlobalExceptionHandler.class, SecurityConfig.class })
+@Import({
+        GlobalExceptionHandler.class,
+        SecurityConfig.class,
+        ProjetoDescricaoSanitizer.class
+})
 class ProjetoControllerTest {
 
     private static final String ORIGEM_PRODUCAO = "https://www.andreyferraz.com.br";
@@ -107,6 +111,24 @@ class ProjetoControllerTest {
                 .andExpect(jsonPath("$.titulo").value("Titulo"))
                 .andExpect(jsonPath("$.imagemUrl")
                         .value("http://localhost/api/projetos/imagens/imagem.webp"));
+    }
+
+    @Test
+    void buscarPorId_deveSanitizarDescricaoLegadaAntesDeResponder() throws Exception {
+        UUID id = UUID.randomUUID();
+        Projeto legado = new Projeto(
+                id,
+                "Titulo",
+                "<p onclick=\"alert(1)\">Texto <strong>rico</strong>"
+                        + "<script>alert(2)</script></p>",
+                "imagem.webp",
+                "https://example.com");
+        when(projetoService.buscarProjetoPorId(id)).thenReturn(legado);
+
+        mockMvc.perform(get("/api/projetos/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.descricao")
+                        .value("<p>Texto <strong>rico</strong></p>"));
     }
 
     @Test
