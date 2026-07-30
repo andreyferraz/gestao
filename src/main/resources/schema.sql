@@ -62,5 +62,6 @@ CREATE TABLE IF NOT EXISTS projeto (
 	titulo TEXT NOT NULL,
 	descricao TEXT NOT NULL,
 	imagem_url TEXT NOT NULL,
-	link TEXT NOT NULL
+	link TEXT NOT NULL,
+	updated_at TEXT NOT NULL
 );

@@ -37,8 +37,9 @@ class ProjetoSchemaInitializerTest {
 
         assertThat(columns)
                 .extracting(column -> String.valueOf(column.get("name")))
-                .containsExactly("id", "titulo", "descricao", "imagem_url", "link");
-        assertThat(columns.subList(1, 5))
+                .containsExactly(
+                        "id", "titulo", "descricao", "imagem_url", "link", "updated_at");
+        assertThat(columns.subList(1, 6))
                 .allSatisfy(column ->
                         assertThat(((Number) column.get("notnull")).intValue())
                                 .isEqualTo(1));
@@ -50,14 +51,17 @@ class ProjetoSchemaInitializerTest {
                 new ProjetoSchemaInitializer(jdbcTemplate);
         initializer.ensureProjetoTable();
         jdbcTemplate.update("""
-                INSERT INTO projeto (id, titulo, descricao, imagem_url, link)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO projeto (
+                    id, titulo, descricao, imagem_url, link, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 "projeto-id",
                 "Projeto existente",
                 "Descrição",
                 "https://andreyferraz.com.br/imagem.png",
-                "https://andreyferraz.com.br");
+                "https://andreyferraz.com.br",
+                "2026-07-29T10:00:00Z");
 
         initializer.ensureProjetoTable();
 
@@ -66,6 +70,36 @@ class ProjetoSchemaInitializerTest {
                 String.class,
                 "projeto-id"))
                 .isEqualTo("Projeto existente");
+    }
+
+    @Test
+    void sqliteComTabelaLegada_deveAdicionarEPreencherUpdatedAt() {
+        jdbcTemplate.execute("""
+                CREATE TABLE projeto (
+                    id TEXT PRIMARY KEY,
+                    titulo TEXT NOT NULL,
+                    descricao TEXT NOT NULL,
+                    imagem_url TEXT NOT NULL,
+                    link TEXT NOT NULL
+                )
+                """);
+        jdbcTemplate.update("""
+                INSERT INTO projeto (id, titulo, descricao, imagem_url, link)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                "legado",
+                "Projeto legado",
+                "Descrição",
+                "legado.webp",
+                "https://example.com");
+
+        new ProjetoSchemaInitializer(jdbcTemplate).ensureProjetoTable();
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT updated_at FROM projeto WHERE id = ?",
+                String.class,
+                "legado"))
+                .isNotBlank();
     }
 
     @Test

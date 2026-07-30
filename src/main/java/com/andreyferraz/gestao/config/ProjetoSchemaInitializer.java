@@ -28,9 +28,27 @@ public class ProjetoSchemaInitializer {
                     titulo TEXT NOT NULL,
                     descricao TEXT NOT NULL,
                     imagem_url TEXT NOT NULL,
-                    link TEXT NOT NULL
+                    link TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
                 )
                 """);
+
+        if (!hasColumn("updated_at")) {
+            jdbcTemplate.execute(
+                    "ALTER TABLE projeto ADD COLUMN updated_at TEXT");
+        }
+        jdbcTemplate.update("""
+                UPDATE projeto
+                SET updated_at = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'now')
+                WHERE updated_at IS NULL OR trim(updated_at) = ''
+                """);
+    }
+
+    private boolean hasColumn(String columnName) {
+        return jdbcTemplate.queryForList("PRAGMA table_info(projeto)")
+                .stream()
+                .map(column -> String.valueOf(column.get("name")))
+                .anyMatch(columnName::equalsIgnoreCase);
     }
 
     private boolean isSqlite() {
