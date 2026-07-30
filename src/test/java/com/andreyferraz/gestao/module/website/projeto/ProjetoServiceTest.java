@@ -193,14 +193,16 @@ class ProjetoServiceTest {
     }
 
     @Test
-    void listarProjetos_deveRetornarListaDoRepositorio() {
-        Projeto primeiro = projetoValido();
-        Projeto segundo = new Projeto(null, "Outro", "Outra descricao", "outra.webp", "https://other.example.com");
-        when(repository.findAll()).thenReturn(List.of(primeiro, segundo));
+    void listarProjetos_deveUsarOrdemDeAtualizacaoRecenteDoRepositorio() {
+        Projeto recente = projetoValido();
+        Projeto antigo = new Projeto(null, "Outro", "Outra descricao", "outra.webp", "https://other.example.com");
+        when(repository.findAllOrderByAtualizacaoRecente())
+                .thenReturn(List.of(recente, antigo));
 
         List<Projeto> projetos = service.listarProjetos();
 
-        assertEquals(List.of(primeiro, segundo), projetos);
+        assertEquals(List.of(recente, antigo), projetos);
+        verify(repository).findAllOrderByAtualizacaoRecente();
     }
 
     @Test

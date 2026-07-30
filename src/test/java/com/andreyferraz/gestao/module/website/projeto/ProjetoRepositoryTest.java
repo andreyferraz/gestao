@@ -2,7 +2,9 @@ package com.andreyferraz.gestao.module.website.projeto;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -33,34 +35,96 @@ class ProjetoRepositoryTest {
         assertEquals(id, salvo.getId());
         assertEquals("Site", salvo.getTitulo());
         assertEquals("imagem.webp", salvo.getImagemUrl());
+        assertFalse(jdbcTemplate.queryForObject(
+                "SELECT updated_at FROM projeto WHERE id = ?",
+                String.class,
+                id).isBlank());
     }
 
     @Test
     void atualizar_deveAlterarCamposDoProjeto() {
         UUID id = UUID.randomUUID();
-        repository.inserir(id, "Antigo", "Antes", "antiga.webp", "https://old.example");
+        jdbcTemplate.update("""
+                INSERT INTO projeto (
+                    id, titulo, descricao, imagem_url, link, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                id, "Antigo", "Antes", "antiga.webp", "https://old.example",
+                "2026-07-29T10:00:00Z");
 
         repository.atualizar(id, "Novo", "Depois", "nova.webp", "https://new.example");
 
         Projeto salvo = repository.findById(id).orElseThrow();
         assertEquals("Novo", salvo.getTitulo());
         assertEquals("nova.webp", salvo.getImagemUrl());
+        assertNotEquals("2026-07-29T10:00:00Z", jdbcTemplate.queryForObject(
+                "SELECT updated_at FROM projeto WHERE id = ?",
+                String.class,
+                id));
     }
 
     @Test
-    void atualizarSeEstadoAtual_quandoEstadoForAtual_deveAtualizarUmaLinha() {
-        UUID id = UUID.randomUUID();
-        repository.inserir(id, "Antigo", "Antes", "antiga.webp", "https://old.example");
+    void atualizarSeEstadoAtual_quandoEditarProjetoAntigo_deveMoveLoParaInicio() {
+        UUID antigo = UUID.randomUUID();
+        UUID outro = UUID.randomUUID();
+        jdbcTemplate.update("""
+                INSERT INTO projeto (
+                    id, titulo, descricao, imagem_url, link, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                antigo, "Antigo", "Antes", "antiga.webp",
+                "https://old.example", "2020-01-01T10:00:00Z");
+        jdbcTemplate.update("""
+                INSERT INTO projeto (
+                    id, titulo, descricao, imagem_url, link, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                outro, "Outro", "Descrição", "outro.webp",
+                "https://other.example", "2021-01-01T10:00:00Z");
 
         int linhasAtualizadas = repository.atualizarSeEstadoAtual(
-                id,
+                antigo,
                 "Novo", "Depois", "nova.webp", "https://new.example",
                 "Antigo", "Antes", "antiga.webp", "https://old.example");
 
         assertEquals(1, linhasAtualizadas);
-        Projeto salvo = repository.findById(id).orElseThrow();
+        Projeto salvo = repository.findById(antigo).orElseThrow();
         assertEquals("Novo", salvo.getTitulo());
         assertEquals("nova.webp", salvo.getImagemUrl());
+        assertEquals(
+                antigo,
+                repository.findAllOrderByAtualizacaoRecente().get(0).getId());
+    }
+
+    @Test
+    void findAllOrderByAtualizacaoRecente_deveRetornarMaisNovoPrimeiro() {
+        UUID antigo = UUID.randomUUID();
+        UUID recente = UUID.randomUUID();
+        jdbcTemplate.update("""
+                INSERT INTO projeto (
+                    id, titulo, descricao, imagem_url, link, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                antigo, "Antigo", "Descrição", "antigo.webp",
+                "https://old.example", "2026-07-29T10:00:00Z");
+        jdbcTemplate.update("""
+                INSERT INTO projeto (
+                    id, titulo, descricao, imagem_url, link, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                recente, "Recente", "Descrição", "recente.webp",
+                "https://new.example", "2026-07-30T10:00:00Z");
+
+        List<UUID> ids = repository.findAllOrderByAtualizacaoRecente().stream()
+                .map(Projeto::getId)
+                .toList();
+
+        assertEquals(List.of(recente, antigo), ids);
     }
 
     @Test
@@ -139,8 +203,13 @@ class ProjetoRepositoryTest {
         permitirNulosLegados();
         UUID id = UUID.randomUUID();
         jdbcTemplate.update(
-                "INSERT INTO projeto (id, titulo, descricao, imagem_url, link) VALUES (?, ?, ?, ?, ?)",
-                id, null, null, "legada.webp", null);
+                """
+                INSERT INTO projeto (
+                    id, titulo, descricao, imagem_url, link, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                id, null, null, "legada.webp", null, "2026-07-29T10:00:00Z");
 
         int linhasAtualizadas = repository.atualizarSeEstadoAtual(
                 id,
@@ -158,8 +227,13 @@ class ProjetoRepositoryTest {
         permitirNulosLegados();
         UUID id = UUID.randomUUID();
         jdbcTemplate.update(
-                "INSERT INTO projeto (id, titulo, descricao, imagem_url, link) VALUES (?, ?, ?, ?, ?)",
-                id, null, null, null, null);
+                """
+                INSERT INTO projeto (
+                    id, titulo, descricao, imagem_url, link, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                id, null, null, null, null, "2026-07-29T10:00:00Z");
 
         int linhasExcluidas = repository.deletarSeEstadoAtual(id, null, null, null, null);
 

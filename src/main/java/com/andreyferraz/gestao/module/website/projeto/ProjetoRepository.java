@@ -1,5 +1,7 @@
 package com.andreyferraz.gestao.module.website.projeto;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jdbc.repository.query.Modifying;
@@ -10,12 +12,42 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProjetoRepository extends CrudRepository<Projeto, UUID> {
 
+	default void inserir(
+			UUID id,
+			String titulo,
+			String descricao,
+			String imagemUrl,
+			String link) {
+		inserirComAtualizacao(
+				id, titulo, descricao, imagemUrl, link, Instant.now().toString());
+	}
+
 	@Modifying
 	@Query("""
-			INSERT INTO projeto (id, titulo, descricao, imagem_url, link)
-			VALUES (:id, :titulo, :descricao, :imagemUrl, :link)
+			INSERT INTO projeto (
+				id, titulo, descricao, imagem_url, link, updated_at
+			)
+			VALUES (
+				:id, :titulo, :descricao, :imagemUrl, :link, :updatedAt
+			)
 			""")
-	void inserir(UUID id, String titulo, String descricao, String imagemUrl, String link);
+	void inserirComAtualizacao(
+			UUID id,
+			String titulo,
+			String descricao,
+			String imagemUrl,
+			String link,
+			String updatedAt);
+
+	default void atualizar(
+			UUID id,
+			String titulo,
+			String descricao,
+			String imagemUrl,
+			String link) {
+		atualizarComData(
+				id, titulo, descricao, imagemUrl, link, Instant.now().toString());
+	}
 
 	@Modifying
 	@Query("""
@@ -23,10 +55,40 @@ public interface ProjetoRepository extends CrudRepository<Projeto, UUID> {
 			SET titulo = :titulo,
 				descricao = :descricao,
 				imagem_url = :imagemUrl,
-				link = :link
+				link = :link,
+				updated_at = :updatedAt
 			WHERE id = :id
 			""")
-	void atualizar(UUID id, String titulo, String descricao, String imagemUrl, String link);
+	void atualizarComData(
+			UUID id,
+			String titulo,
+			String descricao,
+			String imagemUrl,
+			String link,
+			String updatedAt);
+
+	default int atualizarSeEstadoAtual(
+			UUID id,
+			String titulo,
+			String descricao,
+			String imagemUrl,
+			String link,
+			String tituloAnterior,
+			String descricaoAnterior,
+			String imagemAnterior,
+			String linkAnterior) {
+		return atualizarSeEstadoAtualComData(
+				id,
+				titulo,
+				descricao,
+				imagemUrl,
+				link,
+				tituloAnterior,
+				descricaoAnterior,
+				imagemAnterior,
+				linkAnterior,
+				Instant.now().toString());
+	}
 
 	@Modifying
 	@Query("""
@@ -34,7 +96,8 @@ public interface ProjetoRepository extends CrudRepository<Projeto, UUID> {
 			SET titulo = :titulo,
 				descricao = :descricao,
 				imagem_url = :imagemUrl,
-				link = :link
+				link = :link,
+				updated_at = :updatedAt
 			WHERE id = :id
 				AND (titulo = :tituloAnterior
 					OR (titulo IS NULL AND :tituloAnterior IS NULL))
@@ -45,7 +108,7 @@ public interface ProjetoRepository extends CrudRepository<Projeto, UUID> {
 				AND (link = :linkAnterior
 					OR (link IS NULL AND :linkAnterior IS NULL))
 			""")
-	int atualizarSeEstadoAtual(
+	int atualizarSeEstadoAtualComData(
 			UUID id,
 			String titulo,
 			String descricao,
@@ -54,7 +117,15 @@ public interface ProjetoRepository extends CrudRepository<Projeto, UUID> {
 			String tituloAnterior,
 			String descricaoAnterior,
 			String imagemAnterior,
-			String linkAnterior);
+			String linkAnterior,
+			String updatedAt);
+
+	@Query("""
+			SELECT id, titulo, descricao, imagem_url, link
+			FROM projeto
+			ORDER BY updated_at DESC, id DESC
+			""")
+	List<Projeto> findAllOrderByAtualizacaoRecente();
 
 	@Modifying
 	@Query("""

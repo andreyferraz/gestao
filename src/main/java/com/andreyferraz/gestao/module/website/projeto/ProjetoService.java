@@ -5,7 +5,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import java.util.stream.StreamSupport;
 
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -114,8 +113,7 @@ public class ProjetoService {
 
     @Transactional(readOnly = true)
     public List<Projeto> listarProjetos() {
-        return StreamSupport.stream(projetoRepository.findAll().spliterator(), false)
-                .toList();
+        return projetoRepository.findAllOrderByAtualizacaoRecente();
     }
 
     @Transactional(readOnly = true)
