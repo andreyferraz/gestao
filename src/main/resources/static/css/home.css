@@ -1087,6 +1087,110 @@ body.dashboard-page {
     font-size: 13px;
 }
 
+.dashboard-page .projeto-form {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.dashboard-page .projeto-form label {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.dashboard-page .projeto-form input,
+.dashboard-page .projeto-form textarea {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.dashboard-page .projeto-form textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.dashboard-page .projeto-form-acoes,
+.dashboard-page .projeto-item-acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.dashboard-page .projeto-form-acoes button,
+.dashboard-page .projeto-item-acoes button {
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.dashboard-page #projeto-salvar,
+.dashboard-page .projeto-editar {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #ffffff;
+}
+
+.dashboard-page #projeto-cancelar {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.dashboard-page .projeto-excluir {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.dashboard-page .projeto-form button:disabled,
+.dashboard-page .projeto-item-acoes button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+.dashboard-page .projetos-lista {
+    display: grid;
+    gap: 8px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.dashboard-page .projeto-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px;
+    background: #f8fafc;
+}
+
+.dashboard-page .projeto-item-titulo {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.dashboard-page .projeto-lista-vazia {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.dashboard-page #projeto-feedback.erro {
+    color: #b91c1c;
+}
+
+.dashboard-page #projeto-feedback.sucesso {
+    color: #0f766e;
+}
+
 @media (max-width: 900px) {
     .dashboard-page .dashboard-shell {
         grid-template-columns: 1fr;
@@ -1106,5 +1210,14 @@ body.dashboard-page {
 
     .dashboard-page .resumo-grafico-card {
         grid-column: auto;
+    }
+
+    .dashboard-page .projeto-item {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .dashboard-page .projeto-item-acoes button {
+        flex: 1;
     }
 }

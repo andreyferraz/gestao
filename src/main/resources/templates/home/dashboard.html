@@ -49,6 +49,13 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
                 <span>Leads</span>
             </button>
+            <button type="button" class="nav-tab" data-tab-target="tab-projetos">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 5h16v14H4z"/>
+                    <path d="M8 9h8M8 13h5"/>
+                </svg>
+                <span>Projetos</span>
+            </button>
             <button type="button" class="nav-tab" data-tab-target="tab-chamados">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="M8 10h8M8 14h5"/></svg>
                 <span>Chamados</span>
@@ -316,6 +323,46 @@
                 <small id="lead-feedback" class="obs">* Carregando leads do backend.</small>
             </article>
 
+            <article id="tab-projetos" class="panel tab-panel">
+                <div class="panel-head">
+                    <h3>Projetos</h3>
+                    <span class="chip">Portfólio</span>
+                </div>
+                <p class="panel-sub">Cadastre e administre os projetos exibidos no portfólio.</p>
+
+                <form id="projeto-form" class="projeto-form" action="#" method="post"
+                      enctype="multipart/form-data" onsubmit="return false;">
+                    <label for="projeto-titulo">Título</label>
+                    <input id="projeto-titulo" name="titulo" type="text"
+                           placeholder="Ex.: Site institucional" required>
+
+                    <label for="projeto-descricao">Descrição</label>
+                    <textarea id="projeto-descricao" name="descricao" rows="5"
+                              placeholder="Descreva o projeto..." required></textarea>
+
+                    <label for="projeto-link">Link</label>
+                    <input id="projeto-link" name="link" type="url"
+                           placeholder="https://www.exemplo.com.br" required>
+
+                    <label for="projeto-imagem">Imagem</label>
+                    <input id="projeto-imagem" name="imagem" type="file"
+                           accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+                           required>
+
+                    <div class="projeto-form-acoes">
+                        <button id="projeto-salvar" type="submit">Salvar projeto</button>
+                        <button id="projeto-cancelar" type="button" hidden>Cancelar edição</button>
+                    </div>
+                </form>
+
+                <small id="projeto-modo" class="obs">Modo atual: novo projeto.</small>
+                <ul id="projetos-lista" class="projetos-lista"
+                    aria-label="Lista de projetos cadastrados"></ul>
+                <small id="projeto-feedback" class="obs" aria-live="polite">
+                    Carregando projetos...
+                </small>
+            </article>
+
             <article id="tab-chamados" class="panel tab-panel">
                 <div class="panel-head">
                     <h3>Chamados</h3>
@@ -359,6 +406,7 @@
 <script defer src="/js/resumo.js?v=1" th:src="@{/js/resumo.js(v=1)}"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script defer src="/js/dashboard-async.js?v=1" th:src="@{/js/dashboard-async.js(v=1)}"></script>
+<script defer src="/js/projetos.js?v=1" th:src="@{/js/projetos.js(v=1)}"></script>
 <script defer src="/js/dashboard.js?v=20" th:src="@{/js/dashboard.js(v=20)}"></script>
 </body>
 </html>

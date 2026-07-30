@@ -44,4 +44,32 @@ class HomeControllerTest {
 		assertTrue(painelResumo.contains("<ul id=\"resumo-clientes-lista\""));
 		assertTrue(painelResumo.contains("<ul id=\"resumo-leads-lista\""));
 	}
+
+	@Test
+	@WithMockUser(username = "admin")
+	void dashboard_deveExporAdministracaoDeProjetosEmPainelUnico() throws Exception {
+		String html = mockMvc.perform(get("/dashboard"))
+				.andExpect(status().isOk())
+				.andExpect(view().name("home/dashboard"))
+				.andReturn()
+				.getResponse()
+				.getContentAsString();
+
+		assertTrue(html.contains("data-tab-target=\"tab-projetos\""));
+
+		int inicio = html.indexOf("<article id=\"tab-projetos\"");
+		int fim = html.indexOf("</article>", inicio);
+		assertTrue(inicio >= 0 && fim > inicio, "O painel Projetos deve existir.");
+
+		String painel = html.substring(inicio, fim);
+		assertTrue(painel.contains("id=\"projeto-form\""));
+		assertTrue(painel.contains("id=\"projeto-titulo\""));
+		assertTrue(painel.contains("id=\"projeto-descricao\""));
+		assertTrue(painel.contains("id=\"projeto-link\""));
+		assertTrue(painel.contains("id=\"projeto-imagem\""));
+		assertTrue(painel.contains("id=\"projeto-salvar\""));
+		assertTrue(painel.contains("id=\"projeto-cancelar\""));
+		assertTrue(painel.contains("id=\"projetos-lista\""));
+		assertTrue(html.contains("/js/projetos.js"));
+	}
 }
