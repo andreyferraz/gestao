@@ -9,6 +9,8 @@ window.addEventListener("DOMContentLoaded", function () {
         ? ""
         : contextoAplicacao.replace(/\/$/, "");
 
+    const chaveAbaAtiva = contextoNormalizado + "::gestao-dashboard-aba-ativa";
+
     const montarUrlAplicacao = function (url) {
         if (!url) {
             return contextoNormalizado || "/";
@@ -129,6 +131,27 @@ window.addEventListener("DOMContentLoaded", function () {
         elementos.tabPanels.forEach(function (panel) {
             panel.classList.toggle("active", panel.id === tabId);
         });
+
+        try {
+            if (tabId) {
+                window.localStorage.setItem(chaveAbaAtiva, tabId);
+            }
+        } catch (error) {
+            // Ignore storage failures so the dashboard still works.
+        }
+    };
+
+    const obterAbaInicial = function () {
+        try {
+            const abaSalva = window.localStorage.getItem(chaveAbaAtiva);
+            const abaValida = elementos.navTabs.some(function (tab) {
+                return tab.dataset.tabTarget === abaSalva;
+            });
+
+            return abaValida ? abaSalva : "tab-resumo";
+        } catch (error) {
+            return "tab-resumo";
+        }
     };
 
     const formatarMoeda = function (valor) {
@@ -2154,7 +2177,7 @@ window.addEventListener("DOMContentLoaded", function () {
     }
 
     const iniciarPainel = function () {
-        ativarAba("tab-resumo");
+        ativarAba(obterAbaInicial());
 
         return window.GestaoDashboardAsync.executarComTarefaEmSegundoPlano(
             carregarResumoBackend,
