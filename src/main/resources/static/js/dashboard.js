@@ -1772,6 +1772,73 @@ window.addEventListener("DOMContentLoaded", function () {
                 + "<p>Clientes ativos: " + vendedor.clientesAtivos + "</p>"
                 + "<p>Comissao: " + (vendedor.aptoComissao ? formatarMoeda(vendedor.comissaoTotal) : "Aguardando 5 clientes") + "</p>";
 
+            const acoes = document.createElement("div");
+            acoes.className = "cliente-actions";
+
+            const botaoEditar = document.createElement("button");
+            botaoEditar.type = "button";
+            botaoEditar.className = "cliente-editar";
+            botaoEditar.textContent = "Editar";
+            botaoEditar.addEventListener("click", function (event) {
+                event.stopPropagation();
+                vendedorSelecionado = vendedor;
+                vendedorEmEdicaoId = vendedor.id;
+                preencherFormularioComVendedor(vendedor);
+                atualizarModoVendedor();
+                setVendedorFeedback("Edite os campos e clique em Atualizar Vendedor.", false);
+                ativarAba("tab-vendedores");
+            });
+
+            const botaoExcluir = document.createElement("button");
+            botaoExcluir.type = "button";
+            botaoExcluir.className = "cliente-excluir";
+            botaoExcluir.textContent = "Remover";
+            botaoExcluir.addEventListener("click", async function (event) {
+                event.stopPropagation();
+
+                const confirmar = window.confirm("Deseja realmente remover este vendedor?");
+                if (!confirmar) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(montarUrlAplicacao("/vendedores/" + encodeURIComponent(vendedor.id)), {
+                        method: "DELETE",
+                        headers: obterHeadersComCsrf({
+                            Accept: "application/json"
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const mensagemErro = await obterMensagemErroApi(response, "Falha ao remover vendedor");
+                        throw new Error(mensagemErro);
+                    }
+
+                    if (vendedorSelecionado && vendedorSelecionado.id === vendedor.id) {
+                        vendedorSelecionado = null;
+                        vendedorEmEdicaoId = null;
+                        if (elementos.vendedorForm) {
+                            elementos.vendedorForm.reset();
+                        }
+                        atualizarModoVendedor();
+                    }
+
+                    await carregarVendedoresBackend();
+                    await carregarClientesBackend();
+                    renderLista();
+                    setVendedorFeedback("Vendedor removido com sucesso.", false);
+                } catch (error) {
+                    const mensagem = error instanceof Error && error.message
+                        ? error.message
+                        : "Nao foi possivel remover vendedor agora.";
+                    setVendedorFeedback(mensagem, true);
+                }
+            });
+
+            acoes.appendChild(botaoEditar);
+            acoes.appendChild(botaoExcluir);
+            item.appendChild(acoes);
+
             item.addEventListener("click", function () {
                 vendedorSelecionado = vendedor;
                 vendedorEmEdicaoId = vendedor.id;

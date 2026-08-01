@@ -372,6 +372,10 @@ body.dashboard-page {
     background: linear-gradient(135deg, #475569, #64748b);
 }
 
+.dashboard-page .cliente-excluir {
+    background: linear-gradient(135deg, #b91c1c, #ef4444);
+}
+
 .dashboard-page .cliente-detalhe {
     border: 1px solid var(--line);
     border-radius: 10px;
