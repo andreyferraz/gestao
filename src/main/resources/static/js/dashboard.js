@@ -87,7 +87,9 @@ window.addEventListener("DOMContentLoaded", function () {
         leadEditarButton: null,
         leadExcluirButton: null,
         leadBuscaContainer: null,
-        leadBuscaInput: null
+        leadBuscaInput: null,
+        clienteBuscaContainer: null,
+        clienteBuscaInput: null
         , chamadoForm: document.getElementById("chamado-form")
         , chamadoClienteSelect: document.getElementById("chamado-cliente")
         , chamadoDescricaoInput: document.getElementById("chamado-descricao")
@@ -113,6 +115,7 @@ window.addEventListener("DOMContentLoaded", function () {
     let leadSelecionado = null;
     let leadEmEdicaoId = null;
     let leadBuscaTexto = "";
+    let clienteBuscaTexto = "";
     let vendedorSelecionado = null;
     let vendedorEmEdicaoId = null;
     let chamadoEmEdicao = null;
@@ -532,6 +535,38 @@ window.addEventListener("DOMContentLoaded", function () {
         elementos.leadForm.insertAdjacentElement("afterend", container);
         elementos.leadBuscaContainer = container;
         elementos.leadBuscaInput = input;
+    };
+
+    const criarBuscaClientes = function () {
+        if (!elementos.dominiosAlerta || !elementos.lista || elementos.clienteBuscaContainer) {
+            return;
+        }
+
+        const container = document.createElement("div");
+        container.id = "cliente-busca-container";
+        container.className = "lead-form cliente-busca-form";
+
+        const label = document.createElement("label");
+        label.setAttribute("for", "cliente-busca");
+        label.textContent = "Buscar clientes";
+
+        const input = document.createElement("input");
+        input.id = "cliente-busca";
+        input.type = "search";
+        input.placeholder = "Pesquise por nome, contato, dominio ou vendedor";
+        input.autocomplete = "off";
+
+        input.addEventListener("input", function () {
+            clienteBuscaTexto = normalizarTextoBusca(input.value);
+            renderLista();
+        });
+
+        container.appendChild(label);
+        container.appendChild(input);
+
+        elementos.dominiosAlerta.insertAdjacentElement("afterend", container);
+        elementos.clienteBuscaContainer = container;
+        elementos.clienteBuscaInput = input;
     };
 
     const setVendedorFeedback = function (mensagem, erro) {
@@ -1682,12 +1717,39 @@ window.addEventListener("DOMContentLoaded", function () {
     const renderLista = function () {
         elementos.lista.innerHTML = "";
 
+        const termosBusca = normalizarTextoBusca(clienteBuscaTexto);
+        const clientesVisiveis = termosBusca
+            ? clientes.filter(function (cliente) {
+                const camposBusca = [
+                    cliente.nome,
+                    cliente.contato,
+                    cliente.dominioAplicacao,
+                    cliente.vendedorNome,
+                    cliente.ativo ? "ativo" : "inativo",
+                    formatarMoeda(cliente.valorMensal)
+                ].join(" ");
+
+                return normalizarTextoBusca(camposBusca).includes(termosBusca);
+            })
+            : clientes.slice();
+
         if (clientes.length === 0) {
             elementos.lista.innerHTML = "<li class=\"cliente-item\"><p>Nenhum cliente cadastrado ainda.</p></li>";
             return;
         }
 
-        const clientesOrdenados = obterClientesOrdenadosParaLista();
+        if (clientesVisiveis.length === 0) {
+            elementos.lista.innerHTML = "<li class=\"cliente-item\"><p>Nenhum cliente encontrado para a busca.</p></li>";
+            return;
+        }
+
+        const clientesOrdenados = clientesVisiveis.slice().sort(function (a, b) {
+            if (a.ativo !== b.ativo) {
+                return a.ativo ? -1 : 1;
+            }
+
+            return a.nome.localeCompare(b.nome, "pt-BR");
+        });
 
         clientesOrdenados.forEach(function (cliente) {
             const diasRestantes = diasParaVencerDominio(cliente.dataVencimentoDominio);
@@ -2262,6 +2324,7 @@ window.addEventListener("DOMContentLoaded", function () {
         }
 
         renderAlertasDominio();
+        criarBuscaClientes();
         renderLista();
         renderDetalhe(null);
         renderLeads();
@@ -2283,6 +2346,7 @@ window.addEventListener("DOMContentLoaded", function () {
             setLeadFeedback("Nao foi possivel carregar leads do backend no momento.", true);
         }
 
+        criarBuscaClientes();
         criarBuscaLeads();
 
         try {
