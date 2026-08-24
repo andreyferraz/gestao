@@ -104,11 +104,14 @@ public class SecurityConfig {
 								apiRequest))
 				.httpBasic(basic -> basic
 						.authenticationEntryPoint(apiBasicAuthenticationEntryPoint))
+				.sessionManagement(session -> session
+						.invalidSessionUrl("/login?expired"))
 				.formLogin(form -> form
 						.loginPage("/login")
 						.defaultSuccessUrl("/dashboard", true)
 						.permitAll())
 				.logout(logout -> logout
+						.deleteCookies("JSESSIONID")
 						.logoutSuccessUrl("/login?logout")
 						.permitAll());
 

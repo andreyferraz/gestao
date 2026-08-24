@@ -12,12 +12,16 @@ public class AuthController {
 	public String login(
 			@RequestParam(required = false) String error,
 			@RequestParam(required = false) String logout,
+			@RequestParam(required = false) String expired,
 			Model model) {
 		if (error != null) {
 			model.addAttribute("errorMessage", "Usuario ou senha invalidos.");
 		}
 		if (logout != null) {
 			model.addAttribute("successMessage", "Logout realizado com sucesso.");
+		}
+		if (expired != null) {
+			model.addAttribute("errorMessage", "Sua sessao expirou. Entre novamente.");
 		}
 		return "auth/login";
 	}
