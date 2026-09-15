@@ -9,6 +9,45 @@ window.addEventListener("DOMContentLoaded", function () {
         ? ""
         : contextoAplicacao.replace(/\/$/, "");
 
+    const urlLogin = contextoNormalizado + "/login";
+    const sessaoExpirada = function (response) {
+        if (response.status === 401) {
+            return true;
+        }
+
+        if (!response.redirected || !response.url) {
+            return false;
+        }
+
+        return new URL(response.url, window.location.origin).pathname === urlLogin;
+    };
+
+    const fetchOriginal = window.fetch.bind(window);
+    window.fetch = function () {
+        return fetchOriginal.apply(window, arguments).then(function (response) {
+            if (sessaoExpirada(response) && window.location.pathname !== urlLogin) {
+                window.location.replace(urlLogin + "?expired");
+            }
+
+            return response;
+        });
+    };
+
+    const verificarSessao = function () {
+        fetchOriginal(window.location.href, {
+            credentials: "same-origin",
+            cache: "no-store"
+        }).then(function (response) {
+            if (sessaoExpirada(response) && window.location.pathname !== urlLogin) {
+                window.location.replace(urlLogin + "?expired");
+            }
+        }).catch(function () {
+            // Ignore network failures; the next check can still validate the session.
+        });
+    };
+
+    window.setInterval(verificarSessao, 60000);
+
     const chaveAbaAtiva = contextoNormalizado + "::gestao-dashboard-aba-ativa";
 
     const montarUrlAplicacao = function (url) {
