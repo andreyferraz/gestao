@@ -10,6 +10,20 @@ window.addEventListener("DOMContentLoaded", function () {
         : contextoAplicacao.replace(/\/$/, "");
 
     const urlLogin = contextoNormalizado + "/login";
+    const tempoSessaoMs = 30 * 60 * 1000;
+    let temporizadorSessao;
+
+    const redirecionarParaLogin = function () {
+        if (window.location.pathname !== urlLogin) {
+            window.location.replace(urlLogin + "?expired");
+        }
+    };
+
+    const reiniciarTemporizadorSessao = function () {
+        window.clearTimeout(temporizadorSessao);
+        temporizadorSessao = window.setTimeout(redirecionarParaLogin, tempoSessaoMs);
+    };
+
     const sessaoExpirada = function (response) {
         if (response.status === 401) {
             return true;
@@ -25,28 +39,16 @@ window.addEventListener("DOMContentLoaded", function () {
     const fetchOriginal = window.fetch.bind(window);
     window.fetch = function () {
         return fetchOriginal.apply(window, arguments).then(function (response) {
-            if (sessaoExpirada(response) && window.location.pathname !== urlLogin) {
-                window.location.replace(urlLogin + "?expired");
+            if (sessaoExpirada(response)) {
+                redirecionarParaLogin();
+            } else {
+                reiniciarTemporizadorSessao();
             }
 
             return response;
         });
     };
-
-    const verificarSessao = function () {
-        fetchOriginal(window.location.href, {
-            credentials: "same-origin",
-            cache: "no-store"
-        }).then(function (response) {
-            if (sessaoExpirada(response) && window.location.pathname !== urlLogin) {
-                window.location.replace(urlLogin + "?expired");
-            }
-        }).catch(function () {
-            // Ignore network failures; the next check can still validate the session.
-        });
-    };
-
-    window.setInterval(verificarSessao, 60000);
+    reiniciarTemporizadorSessao();
 
     const chaveAbaAtiva = contextoNormalizado + "::gestao-dashboard-aba-ativa";
 
