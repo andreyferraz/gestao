@@ -1064,6 +1064,10 @@ body.dashboard-page {
     width: min(420px, 100%);
     min-height: 280px;
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .dashboard-page .resumo-lista,

@@ -16,6 +16,7 @@ public class ResumoService {
 		return new ResumoDashboardDto(
 				resumoRepository.buscarIndicadores(),
 				resumoRepository.buscarDistribuicaoValoresMensais(),
+				resumoRepository.buscarDistribuicaoCidades(),
 				resumoRepository.buscarUltimosClientes(),
 				resumoRepository.buscarUltimosLeads());
 	}

@@ -29,6 +29,16 @@ public class ResumoRepository {
 			ORDER BY COALESCE(valor_mensal, 0) ASC
 			""";
 
+	private static final String DISTRIBUICAO_CIDADES_SQL = """
+			SELECT
+				TRIM(cidade) AS cidade,
+				COUNT(*) AS quantidade_clientes
+			FROM cliente
+			WHERE cidade IS NOT NULL AND TRIM(cidade) <> ''
+			GROUP BY TRIM(cidade) COLLATE NOCASE
+			ORDER BY quantidade_clientes DESC, cidade ASC
+			""";
+
 	private static final String ULTIMOS_CLIENTES_SQL = """
 			SELECT id, nome, created_at, COALESCE(valor_mensal, 0) AS valor_mensal, ativo
 			FROM cliente
@@ -63,6 +73,13 @@ public class ResumoRepository {
 		return jdbcTemplate.query(DISTRIBUICAO_SQL, (rs, rowNum) ->
 				new DistribuicaoValorMensalDto(
 						rs.getBigDecimal("valor_mensal"),
+						rs.getLong("quantidade_clientes")));
+	}
+
+	public List<DistribuicaoCidadeDto> buscarDistribuicaoCidades() {
+		return jdbcTemplate.query(DISTRIBUICAO_CIDADES_SQL, (rs, rowNum) ->
+				new DistribuicaoCidadeDto(
+						rs.getString("cidade"),
 						rs.getLong("quantidade_clientes")));
 	}
 

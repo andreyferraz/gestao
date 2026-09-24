@@ -28,6 +28,7 @@ function criarAmbiente() {
     const ids = [
         "kpi-clientes", "kpi-receita", "kpi-dominios", "resumo-feedback",
         "resumo-grafico", "resumo-grafico-estado", "resumo-grafico-legenda",
+        "resumo-grafico-cidades", "resumo-grafico-cidades-estado", "resumo-grafico-cidades-legenda",
         "resumo-clientes-lista", "resumo-leads-lista"
     ];
     const elementos = Object.fromEntries(ids.map(function (id) {
@@ -186,3 +187,74 @@ test("recarregar destroi o gráfico anterior", async function () {
     assert.equal(ambiente.graficos[0].destroyed, true);
     assert.equal(ambiente.graficos.length, 2);
 });
+
+test("carregar renderiza gráfico de cidades e legenda quando houver cidades cadastradas", async function () {
+    const ambiente = criarAmbiente();
+    const payload = {
+        indicadores: { totalClientes: 3, receitaMensalAtiva: 300, dominiosAtivos: 3 },
+        distribuicaoValoresMensais: [],
+        distribuicaoCidades: [
+            { cidade: "São Paulo", quantidadeClientes: 2 },
+            { cidade: "Rio de Janeiro", quantidadeClientes: 1 }
+        ],
+        ultimosClientes: [],
+        ultimosLeads: []
+    };
+    const painel = criarPainelComPayload(ambiente, payload);
+
+    await painel.carregar();
+
+    assert.equal(ambiente.elementos["resumo-grafico-cidades"].hidden, false);
+    assert.equal(ambiente.elementos["resumo-grafico-cidades-estado"].textContent, "");
+    assert.equal(ambiente.graficos.length, 1);
+    assert.equal(ambiente.graficos[0].config.type, "doughnut");
+    assert.deepEqual(ambiente.graficos[0].config.data.labels, ["São Paulo", "Rio de Janeiro"]);
+    assert.deepEqual(ambiente.graficos[0].config.data.datasets[0].data, [2, 1]);
+    assert.equal(
+        ambiente.elementos["resumo-grafico-cidades-legenda"].children[0].textContent,
+        "São Paulo — 2 clientes");
+    assert.equal(
+        ambiente.elementos["resumo-grafico-cidades-legenda"].children[1].textContent,
+        "Rio de Janeiro — 1 cliente");
+});
+
+test("carregar exibe estado vazio no gráfico de cidades quando não houver cidades cadastradas", async function () {
+    const ambiente = criarAmbiente();
+    const payload = {
+        indicadores: { totalClientes: 2, receitaMensalAtiva: 200, dominiosAtivos: 2 },
+        distribuicaoValoresMensais: [],
+        distribuicaoCidades: [],
+        ultimosClientes: [],
+        ultimosLeads: []
+    };
+    const painel = criarPainelComPayload(ambiente, payload);
+
+    await painel.carregar();
+
+    assert.equal(ambiente.graficos.length, 0);
+    assert.equal(ambiente.elementos["resumo-grafico-cidades"].hidden, true);
+    assert.equal(
+        ambiente.elementos["resumo-grafico-cidades-estado"].textContent,
+        "Nenhuma cidade cadastrada para exibir.");
+});
+
+test("recarregar destroi o gráfico de cidades anterior", async function () {
+    const ambiente = criarAmbiente();
+    const payload = {
+        indicadores: { totalClientes: 1, receitaMensalAtiva: 100, dominiosAtivos: 1 },
+        distribuicaoValoresMensais: [],
+        distribuicaoCidades: [
+            { cidade: "Curitiba", quantidadeClientes: 1 }
+        ],
+        ultimosClientes: [],
+        ultimosLeads: []
+    };
+    const painel = criarPainelComPayload(ambiente, payload);
+
+    await painel.carregar();
+    await painel.carregar();
+
+    assert.equal(ambiente.graficos.length, 2);
+    assert.equal(ambiente.graficos[0].destroyed, true);
+});
+

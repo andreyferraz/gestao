@@ -96,7 +96,7 @@
                 </section>
 
                 <div class="resumo-grid">
-                    <section class="resumo-card resumo-grafico-card">
+                    <section class="resumo-card">
                         <h4>Clientes ativos por valor mensal</h4>
                         <div class="resumo-grafico-wrap">
                             <canvas id="resumo-grafico"
@@ -105,6 +105,16 @@
                             <p id="resumo-grafico-estado" class="resumo-vazio"></p>
                         </div>
                         <ul id="resumo-grafico-legenda" class="resumo-legenda"></ul>
+                    </section>
+                    <section class="resumo-card">
+                        <h4>Clientes por cidades</h4>
+                        <div class="resumo-grafico-wrap">
+                            <canvas id="resumo-grafico-cidades"
+                                    role="img"
+                                    aria-label="Distribuição de clientes por cidades"></canvas>
+                            <p id="resumo-grafico-cidades-estado" class="resumo-vazio"></p>
+                        </div>
+                        <ul id="resumo-grafico-cidades-legenda" class="resumo-legenda"></ul>
                     </section>
                     <section class="resumo-card">
                         <h4>Últimos clientes cadastrados</h4>
@@ -420,7 +430,7 @@
     </dialog>
 </div>
 <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script defer src="/js/resumo.js?v=1" th:src="@{/js/resumo.js(v=1)}"></script>
+<script defer src="/js/resumo.js?v=2" th:src="@{/js/resumo.js(v=2)}"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script defer src="/js/dashboard-async.js?v=1" th:src="@{/js/dashboard-async.js(v=1)}"></script>
 <script defer src="https://cdn.quilljs.com/1.3.6/quill.js"></script>

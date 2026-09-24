@@ -22,6 +22,9 @@
             grafico: doc.getElementById("resumo-grafico"),
             estadoGrafico: doc.getElementById("resumo-grafico-estado"),
             legendaGrafico: doc.getElementById("resumo-grafico-legenda"),
+            graficoCidades: doc.getElementById("resumo-grafico-cidades"),
+            estadoGraficoCidades: doc.getElementById("resumo-grafico-cidades-estado"),
+            legendaGraficoCidades: doc.getElementById("resumo-grafico-cidades-legenda"),
             listaClientes: doc.getElementById("resumo-clientes-lista"),
             listaLeads: doc.getElementById("resumo-leads-lista")
         };
@@ -31,12 +34,25 @@
         const doc = options.document;
         const elementos = obterElementos(doc);
         let grafico = null;
+        let graficoCidades = null;
 
         function destruirGrafico() {
             if (grafico && typeof grafico.destroy === "function") {
                 grafico.destroy();
             }
             grafico = null;
+        }
+
+        function destruirGraficoCidades() {
+            if (graficoCidades && typeof graficoCidades.destroy === "function") {
+                graficoCidades.destroy();
+            }
+            graficoCidades = null;
+        }
+
+        function destruirTodosGraficos() {
+            destruirGrafico();
+            destruirGraficoCidades();
         }
 
         function renderizarLista(container, itens, mensagemVazia, criarItem) {
@@ -122,6 +138,9 @@
 
             elementos.grafico.hidden = false;
             elementos.estadoGrafico.textContent = "";
+            const cores = fatias.map(function (_, index) {
+                return PALETA_GRAFICO[index % PALETA_GRAFICO.length];
+            });
             grafico = new options.Chart(elementos.grafico.getContext("2d"), {
                 type: "pie",
                 data: {
@@ -132,7 +151,72 @@
                         data: fatias.map(function (fatia) {
                             return Number(fatia.quantidadeClientes) || 0;
                         }),
-                        backgroundColor: PALETA_GRAFICO
+                        backgroundColor: cores
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderizarLegendaCidades(fatias) {
+            if (!elementos.legendaGraficoCidades) {
+                return;
+            }
+            elementos.legendaGraficoCidades.replaceChildren();
+            fatias.forEach(function (fatia) {
+                const item = doc.createElement("li");
+                const quantidade = Number(fatia.quantidadeClientes) || 0;
+                const sufixo = quantidade === 1 ? "cliente" : "clientes";
+                const cidade = fatia.cidade || "Não informada";
+                item.textContent = cidade + " — " + quantidade + " " + sufixo;
+                elementos.legendaGraficoCidades.appendChild(item);
+            });
+        }
+
+        function renderizarGraficoCidades(fatias) {
+            destruirGraficoCidades();
+
+            if (!elementos.graficoCidades || !elementos.estadoGraficoCidades) {
+                return;
+            }
+
+            renderizarLegendaCidades(fatias);
+
+            if (fatias.length === 0) {
+                elementos.graficoCidades.hidden = true;
+                elementos.estadoGraficoCidades.textContent = "Nenhuma cidade cadastrada para exibir.";
+                return;
+            }
+
+            if (typeof options.Chart !== "function") {
+                elementos.graficoCidades.hidden = true;
+                elementos.estadoGraficoCidades.textContent = "Gráfico indisponível no momento.";
+                return;
+            }
+
+            elementos.graficoCidades.hidden = false;
+            elementos.estadoGraficoCidades.textContent = "";
+            const cores = fatias.map(function (_, index) {
+                return PALETA_GRAFICO[index % PALETA_GRAFICO.length];
+            });
+
+            graficoCidades = new options.Chart(elementos.graficoCidades.getContext("2d"), {
+                type: "doughnut",
+                data: {
+                    labels: fatias.map(function (fatia) {
+                        return fatia.cidade || "Não informada";
+                    }),
+                    datasets: [{
+                        data: fatias.map(function (fatia) {
+                            return Number(fatia.quantidadeClientes) || 0;
+                        }),
+                        backgroundColor: cores
                     }]
                 },
                 options: {
@@ -154,14 +238,16 @@
                 renderizarLeads(Array.isArray(payload.ultimosLeads) ? payload.ultimosLeads : []);
                 renderizarGrafico(Array.isArray(payload.distribuicaoValoresMensais)
                     ? payload.distribuicaoValoresMensais : []);
+                renderizarGraficoCidades(Array.isArray(payload.distribuicaoCidades)
+                    ? payload.distribuicaoCidades : []);
                 elementos.feedback.textContent = "";
             } catch (error) {
-                destruirGrafico();
+                destruirTodosGraficos();
                 elementos.feedback.textContent = "Não foi possível carregar o resumo agora.";
             }
         }
 
-        return { carregar: carregar, destruir: destruirGrafico };
+        return { carregar: carregar, destruir: destruirTodosGraficos };
     }
 
     return { criarPainel: criarPainel };

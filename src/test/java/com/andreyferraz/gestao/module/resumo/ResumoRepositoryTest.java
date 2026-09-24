@@ -28,7 +28,8 @@ class ResumoRepositoryTest {
 					nome TEXT NOT NULL,
 					valor_mensal NUMERIC,
 					ativo INTEGER NOT NULL,
-					created_at TEXT NOT NULL
+					created_at TEXT NOT NULL,
+					cidade TEXT
 				)
 				""");
 		jdbcTemplate.execute("""
@@ -110,14 +111,46 @@ class ResumoRepositoryTest {
 		assertEquals("Lead antigo editado", result.get(1).nome());
 	}
 
+	@Test
+	void buscarDistribuicaoCidades_deveAgruparCidadesIgnorarVaziasECollateNocase() {
+		inserirClienteComCidade("Cliente 1", "2026-07-01T10:00:00Z", "100.00", 1, "São Paulo");
+		inserirClienteComCidade("Cliente 2", "2026-07-02T10:00:00Z", "150.00", 1, "são paulo");
+		inserirClienteComCidade("Cliente 3", "2026-07-03T10:00:00Z", "200.00", 0, "Rio de Janeiro");
+		inserirClienteComCidade("Cliente 4", "2026-07-04T10:00:00Z", "250.00", 1, null);
+		inserirClienteComCidade("Cliente 5", "2026-07-05T10:00:00Z", "300.00", 1, "   ");
+
+		var result = repository.buscarDistribuicaoCidades();
+
+		assertEquals(2, result.size());
+		assertEquals("São Paulo", result.get(0).cidade());
+		assertEquals(2, result.get(0).quantidadeClientes());
+		assertEquals("Rio de Janeiro", result.get(1).cidade());
+		assertEquals(1, result.get(1).quantidadeClientes());
+	}
+
+	@Test
+	void buscarDistribuicaoCidades_deveRetornarVazioQuandoNaoHouverCidades() {
+		inserirCliente("Cliente 1", "2026-07-01T10:00:00Z", "100.00", 1);
+		inserirCliente("Cliente 2", "2026-07-02T10:00:00Z", "200.00", 1);
+
+		var result = repository.buscarDistribuicaoCidades();
+
+		assertEquals(0, result.size());
+	}
+
 	private void inserirCliente(
 			String nome, String createdAt, String valorMensal, int ativo) {
+		inserirClienteComCidade(nome, createdAt, valorMensal, ativo, null);
+	}
+
+	private void inserirClienteComCidade(
+			String nome, String createdAt, String valorMensal, int ativo, String cidade) {
 		jdbcTemplate.update("""
-				INSERT INTO cliente (id, nome, valor_mensal, ativo, created_at)
-				VALUES (?, ?, ?, ?, ?)
+				INSERT INTO cliente (id, nome, valor_mensal, ativo, created_at, cidade)
+				VALUES (?, ?, ?, ?, ?, ?)
 				""",
 				UUID.randomUUID().toString(), nome,
-				new BigDecimal(valorMensal), ativo, createdAt);
+				new BigDecimal(valorMensal), ativo, createdAt, cidade);
 	}
 
 	private void inserirLead(

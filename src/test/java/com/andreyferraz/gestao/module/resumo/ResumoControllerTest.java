@@ -24,6 +24,7 @@ class ResumoControllerTest {
 		var resposta = new ResumoDashboardDto(
 				new ResumoIndicadoresDto(3, new BigDecimal("350.00"), 2),
 				List.of(new DistribuicaoValorMensalDto(new BigDecimal("100.00"), 2)),
+				List.of(new DistribuicaoCidadeDto("São Paulo", 2)),
 				List.of(new ClienteRecenteDto(
 						clienteId, "Cliente novo", "2026-07-29T10:00:00Z",
 						new BigDecimal("100.00"), true)),
@@ -42,6 +43,8 @@ class ResumoControllerTest {
 				.andExpect(jsonPath("$.indicadores.dominiosAtivos").value(2))
 				.andExpect(jsonPath("$.distribuicaoValoresMensais[0].valorMensal").value(100.0))
 				.andExpect(jsonPath("$.distribuicaoValoresMensais[0].quantidadeClientes").value(2))
+				.andExpect(jsonPath("$.distribuicaoCidades[0].cidade").value("São Paulo"))
+				.andExpect(jsonPath("$.distribuicaoCidades[0].quantidadeClientes").value(2))
 				.andExpect(jsonPath("$.ultimosClientes[0].id").value(clienteId.toString()))
 				.andExpect(jsonPath("$.ultimosClientes[0].createdAt")
 						.value("2026-07-29T10:00:00Z"))
