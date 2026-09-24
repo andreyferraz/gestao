@@ -41,7 +41,8 @@ public class ClienteService {
 				cliente.getValorMensal() != null ? cliente.getValorMensal() : BigDecimal.ZERO,
 				cliente.getAtivo() != null && cliente.getAtivo() == 1 ? 1 : 0,
 				validarVendedor(cliente.getVendedorId()),
-				cliente.getCreatedAt());
+				cliente.getCreatedAt(),
+				cliente.getCidade());
 
 		return cliente;
 	}
@@ -72,6 +73,7 @@ public class ClienteService {
 							cliente.getDominioAplicacao(),
 							cliente.getDataVencimentoDominio(),
 							cliente.getInformacoesUteis(),
+							cliente.getCidade(),
 							cliente.getVendedorId(),
 							vendedorNome,
 							cliente.getAtivo() != null && cliente.getAtivo() == 1,
@@ -103,7 +105,8 @@ public class ClienteService {
 				clienteAtualizado.getInformacoesUteis(),
 				clienteAtualizado.getValorMensal() != null ? clienteAtualizado.getValorMensal() : BigDecimal.ZERO,
 				clienteAtualizado.getAtivo() != null && clienteAtualizado.getAtivo() == 1 ? 1 : 0,
-				validarVendedor(clienteAtualizado.getVendedorId()));
+				validarVendedor(clienteAtualizado.getVendedorId()),
+				clienteAtualizado.getCidade());
 
 		return clienteAtualizado;
 	}

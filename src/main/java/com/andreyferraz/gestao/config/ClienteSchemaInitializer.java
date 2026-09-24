@@ -49,6 +49,10 @@ public class ClienteSchemaInitializer {
 			jdbcTemplate.execute("ALTER TABLE cliente ADD COLUMN created_at TEXT");
 		}
 
+		if (!hasColumn(CLIENTE_TABLE, "cidade")) {
+			jdbcTemplate.execute("ALTER TABLE cliente ADD COLUMN cidade TEXT");
+		}
+
 		jdbcTemplate.execute("""
 				UPDATE cliente
 				SET created_at = STRFTIME('%Y-%m-%dT%H:%M:%fZ', 'now')

@@ -47,6 +47,7 @@ class ClienteServiceTest {
         input.setDominioAplicacao("dominio");
         input.setDataVencimentoDominio(LocalDate.of(2026, 1, 1));
         input.setInformacoesUteis("infos importantes");
+        input.setCidade("São Paulo");
         input.setValorMensal(BigDecimal.valueOf(100));
         input.setAtivo(1);
         input.setVendedorId(null);
@@ -59,9 +60,10 @@ class ClienteServiceTest {
         assertEquals(input.getDominioAplicacao(), result.getDominioAplicacao());
         assertEquals(input.getDataVencimentoDominio(), result.getDataVencimentoDominio());
         assertEquals(input.getInformacoesUteis(), result.getInformacoesUteis());
+        assertEquals(input.getCidade(), result.getCidade());
         assertEquals(input.getValorMensal(), result.getValorMensal());
         assertEquals(input.getAtivo(), result.getAtivo());
-        verify(clienteRepository).inserir(any(UUID.class), eq("Nome"), eq("contato"), eq("dominio"), eq(LocalDate.of(2026, 1, 1)), eq("infos importantes"), eq(BigDecimal.valueOf(100)), eq(1), isNull(), any(String.class));
+        verify(clienteRepository).inserir(any(UUID.class), eq("Nome"), eq("contato"), eq("dominio"), eq(LocalDate.of(2026, 1, 1)), eq("infos importantes"), eq(BigDecimal.valueOf(100)), eq(1), isNull(), any(String.class), eq("São Paulo"));
     }
 
     @Test
@@ -95,7 +97,7 @@ class ClienteServiceTest {
                 eq(result.getId()), eq(result.getNome()), eq(result.getContato()),
                 eq(result.getDominioAplicacao()), eq(result.getDataVencimentoDominio()),
                 eq(result.getInformacoesUteis()), eq(result.getValorMensal()),
-                eq(result.getAtivo()), isNull(), eq(result.getCreatedAt()));
+                eq(result.getAtivo()), isNull(), eq(result.getCreatedAt()), isNull());
     }
 
     @Test
@@ -105,12 +107,19 @@ class ClienteServiceTest {
         existente.setId(id);
         existente.setCreatedAt("2026-06-01T10:00:00Z");
         var alterado = clienteValido();
+        alterado.setCidade("Rio de Janeiro");
         alterado.setCreatedAt("2099-01-01T00:00:00Z");
         when(clienteRepository.findById(id)).thenReturn(Optional.of(existente));
 
         var result = clienteService.atualizar(id, alterado);
 
         assertEquals("2026-06-01T10:00:00Z", result.getCreatedAt());
+        assertEquals("Rio de Janeiro", result.getCidade());
+        verify(clienteRepository).atualizar(
+                eq(id), eq(alterado.getNome()), eq(alterado.getContato()),
+                eq(alterado.getDominioAplicacao()), eq(alterado.getDataVencimentoDominio()),
+                eq(alterado.getInformacoesUteis()), eq(alterado.getValorMensal()),
+                eq(alterado.getAtivo()), isNull(), eq("Rio de Janeiro"));
     }
 
     @Test
@@ -130,6 +139,7 @@ class ClienteServiceTest {
         c.setDominioAplicacao("d");
         c.setDataVencimentoDominio(LocalDate.now());
         c.setInformacoesUteis("observacoes do cliente");
+        c.setCidade(null);
         c.setValorMensal(null);
         c.setAtivo(0);
         c.setVendedorId(null);
@@ -138,6 +148,7 @@ class ClienteServiceTest {
         assertEquals(1, resumo.size());
         assertEquals(0.0, resumo.get(0).valorMensal());
         assertEquals("observacoes do cliente", resumo.get(0).informacoesUteis());
+        assertEquals(null, resumo.get(0).cidade());
     }
 
     @Test
@@ -172,6 +183,7 @@ class ClienteServiceTest {
         c.setDominioAplicacao("dom");
         c.setDataVencimentoDominio(LocalDate.now());
         c.setInformacoesUteis("informacao extra");
+        c.setCidade("Curitiba");
         c.setValorMensal(BigDecimal.valueOf(50));
         c.setAtivo(1);
         c.setVendedorId(vendedorId);
@@ -182,6 +194,7 @@ class ClienteServiceTest {
         assertEquals(1, resumo.size());
         assertEquals("Joao", resumo.get(0).vendedorNome());
         assertEquals("informacao extra", resumo.get(0).informacoesUteis());
+        assertEquals("Curitiba", resumo.get(0).cidade());
         assertTrue(resumo.get(0).ativo());
         assertEquals(50.0, resumo.get(0).valorMensal());
     }

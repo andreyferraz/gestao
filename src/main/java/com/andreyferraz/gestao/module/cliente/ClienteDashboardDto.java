@@ -10,6 +10,7 @@ public record ClienteDashboardDto(
 		String dominioAplicacao,
 		LocalDate dataVencimentoDominio,
 		String informacoesUteis,
+		String cidade,
 		UUID vendedorId,
 		String vendedorNome,
 		Boolean ativo,

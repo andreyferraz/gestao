@@ -45,4 +45,6 @@ public class Cliente {
 	@Column("created_at")
 	private String createdAt;
 
+	private String cidade;
+
 }

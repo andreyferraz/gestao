@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS cliente (
 	ativo INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1)),
 	vendedor_id TEXT,
 	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	cidade TEXT,
 	FOREIGN KEY (vendedor_id) REFERENCES vendedor(id)
 );
 

@@ -94,6 +94,7 @@ window.addEventListener("DOMContentLoaded", function () {
         cadastroFeedback: document.getElementById("cadastro-feedback"),
         novoNomeInput: document.getElementById("novo-nome"),
         novoContatoInput: document.getElementById("novo-contato"),
+        novoCidadeInput: document.getElementById("novo-cidade"),
         novoDominioInput: document.getElementById("novo-dominio"),
         novoInformacoesUteisInput: document.getElementById("novo-informacoes-uteis"),
         novoVencimentoInput: document.getElementById("novo-vencimento"),
@@ -358,6 +359,7 @@ window.addEventListener("DOMContentLoaded", function () {
             dominioAplicacao: cliente.dominioAplicacao || "Nao informado",
             dataVencimentoDominio: cliente.dataVencimentoDominio || "",
             informacoesUteis: cliente.informacoesUteis || "",
+            cidade: cliente.cidade || "",
             vendedorId: cliente.vendedorId || null,
             vendedorNome: cliente.vendedorNome || null,
             ativo: ativoNormalizado,
@@ -651,7 +653,7 @@ window.addEventListener("DOMContentLoaded", function () {
         const input = document.createElement("input");
         input.id = "cliente-busca";
         input.type = "search";
-        input.placeholder = "Pesquise por nome, contato, dominio ou vendedor";
+        input.placeholder = "Pesquise por nome, contato, cidade, dominio ou vendedor";
         input.autocomplete = "off";
 
         input.addEventListener("input", function () {
@@ -891,6 +893,9 @@ window.addEventListener("DOMContentLoaded", function () {
 
         elementos.novoNomeInput.value = cliente.nome || "";
         elementos.novoContatoInput.value = cliente.contato || "";
+        if (elementos.novoCidadeInput) {
+            elementos.novoCidadeInput.value = cliente.cidade || "";
+        }
         elementos.novoDominioInput.value = cliente.dominioAplicacao || "";
         if (elementos.novoInformacoesUteisInput) {
             elementos.novoInformacoesUteisInput.value = cliente.informacoesUteis || "";
@@ -1045,6 +1050,7 @@ window.addEventListener("DOMContentLoaded", function () {
             + "<dl>"
             + "<dt>Nome</dt><dd>" + cliente.nome + "</dd>"
             + "<dt>Contato</dt><dd>" + cliente.contato + "</dd>"
+            + "<dt>Cidade</dt><dd>" + (cliente.cidade || "Nao informada") + "</dd>"
             + "<dt>Dominio</dt><dd>" + cliente.dominioAplicacao + "</dd>"
             + "<dt>Vencimento</dt><dd>" + formatarData(cliente.dataVencimentoDominio) + "</dd>"
             + "<dt>Informacoes uteis</dt><dd class=\"pre-line\">" + (cliente.informacoesUteis || "Sem informacoes") + "</dd>"
@@ -1888,6 +1894,7 @@ window.addEventListener("DOMContentLoaded", function () {
                 const camposBusca = [
                     cliente.nome,
                     cliente.contato,
+                    cliente.cidade,
                     cliente.dominioAplicacao,
                     cliente.vendedorNome,
                     cliente.ativo ? "ativo" : "inativo",
@@ -1954,6 +1961,7 @@ window.addEventListener("DOMContentLoaded", function () {
             item.innerHTML = ""
                 + "<div class=\"cliente-topo\"><h4>" + cliente.nome + "</h4>" + seloAlerta + "</div>"
                 + "<p>Contato: " + cliente.contato + "</p>"
+                + "<p>Cidade: " + (cliente.cidade || "-") + "</p>"
                 + "<p>Dominio: " + cliente.dominioAplicacao + "</p>"
                 + "<p>Vendedor: " + (cliente.vendedorNome || "Sem vendedor") + "</p>"
                 + "<p>Mensalidade: " + formatarMoeda(cliente.valorMensal) + "</p>";
@@ -2189,6 +2197,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
         const nome = elementos.novoNomeInput.value.trim();
         const contato = elementos.novoContatoInput.value.trim();
+        const cidade = elementos.novoCidadeInput ? elementos.novoCidadeInput.value.trim() : "";
         const dominioAplicacao = elementos.novoDominioInput.value.trim();
         const informacoesUteis = elementos.novoInformacoesUteisInput ? elementos.novoInformacoesUteisInput.value.trim() : "";
         const dataVencimentoDominio = elementos.novoVencimentoInput.value;
@@ -2203,6 +2212,7 @@ window.addEventListener("DOMContentLoaded", function () {
         const payload = {
             nome: nome,
             contato: contato,
+            cidade: cidade,
             dominioAplicacao: dominioAplicacao,
             informacoesUteis: informacoesUteis,
             dataVencimentoDominio: dataVencimentoDominio,
@@ -2241,6 +2251,7 @@ window.addEventListener("DOMContentLoaded", function () {
         const clienteCriado = normalizarCliente(await response.json());
         clienteCriado.valorMensal = valorMensal;
         clienteCriado.informacoesUteis = informacoesUteis;
+        clienteCriado.cidade = cidade;
 
         if (elementos.cadastroForm) {
             elementos.cadastroForm.reset();
