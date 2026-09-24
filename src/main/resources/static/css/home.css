@@ -679,7 +679,7 @@ body.dashboard-page {
 
 .dashboard-page .lead-form textarea {
     resize: vertical;
-    min-height: 90px;
+    min-height: 110px;
 }
 
 .dashboard-page .lead-form button {
@@ -724,6 +724,7 @@ body.dashboard-page {
     margin: 0;
     color: var(--muted);
     font-size: 13px;
+    white-space: pre-wrap;
 }
 
 .dashboard-page .lead-item p + p {
@@ -758,6 +759,11 @@ body.dashboard-page {
 
 .dashboard-page .lead-detalhe dd {
     margin: 0;
+}
+
+.dashboard-page .lead-detalhe dd.pre-line {
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .dashboard-page .lead-actions {

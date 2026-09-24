@@ -743,7 +743,7 @@ window.addEventListener("DOMContentLoaded", function () {
             + "<dt>Telefone</dt><dd>" + lead.telefone + "</dd>"
             + "<dt>Desenvolvimento</dt><dd>" + formatarMoeda(lead.orcamentoDesenvolvimento) + "</dd>"
             + "<dt>Manutencao/Hospedagem</dt><dd>" + formatarMoeda(lead.orcamentoManutencaoHospedagem) + "</dd>"
-            + "<dt>Observacoes</dt><dd>" + (lead.observacoes || "Sem observacoes") + "</dd>"
+            + "<dt>Observacoes</dt><dd class=\"pre-line\">" + (lead.observacoes || "Sem observacoes") + "</dd>"
             + "</dl>";
 
         if (elementos.leadEditarButton) {
