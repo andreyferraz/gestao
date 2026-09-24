@@ -125,6 +125,7 @@
                 <p class="panel-sub">Lista sincronizada com os clientes salvos no backend.</p>
                 <div id="dominios-alerta" class="dominios-alerta" aria-live="polite"></div>
                 <ul id="clientes-lista" class="clientes-lista"></ul>
+                <nav id="clientes-paginacao" class="lista-paginacao" aria-label="Paginação de clientes" hidden></nav>
             </article>
 
             <article id="tab-detalhes" class="panel tab-panel">
@@ -320,6 +321,7 @@
                 <small id="lead-modo" class="obs">Modo atual: novo lead.</small>
 
                 <ul id="leads-lista" class="leads-lista" aria-label="Lista de leads cadastrados"></ul>
+                <nav id="leads-paginacao" class="lista-paginacao" aria-label="Paginação de leads" hidden></nav>
 
                 <small id="lead-feedback" class="obs">* Carregando leads do backend.</small>
             </article>
@@ -394,6 +396,7 @@
                 </form>
 
                 <ul id="chamados-lista" class="chamados-lista" aria-label="Lista de chamados"></ul>
+                <nav id="chamados-paginacao" class="lista-paginacao" aria-label="Paginação de chamados" hidden></nav>
                 <small id="chamado-feedback" class="obs">* Carregando chamados do backend.</small>
             </article>
         </section>
@@ -419,6 +422,7 @@
 <script defer src="/js/dashboard-async.js?v=1" th:src="@{/js/dashboard-async.js(v=1)}"></script>
 <script defer src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script defer src="/js/projetos.js?v=2" th:src="@{/js/projetos.js(v=2)}"></script>
-<script defer src="/js/dashboard.js?v=22" th:src="@{/js/dashboard.js(v=22)}"></script>
+<script defer src="/js/paginacao.js?v=1" th:src="@{/js/paginacao.js(v=1)}"></script>
+<script defer src="/js/dashboard.js?v=23" th:src="@{/js/dashboard.js(v=23)}"></script>
 </body>
 </html>

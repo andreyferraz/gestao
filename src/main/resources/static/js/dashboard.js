@@ -130,7 +130,10 @@ window.addEventListener("DOMContentLoaded", function () {
         leadBuscaContainer: null,
         leadBuscaInput: null,
         clienteBuscaContainer: null,
-        clienteBuscaInput: null
+        clienteBuscaInput: null,
+        clientesPaginacao: document.getElementById("clientes-paginacao"),
+        leadsPaginacao: document.getElementById("leads-paginacao"),
+        chamadosPaginacao: document.getElementById("chamados-paginacao")
         , chamadoForm: document.getElementById("chamado-form")
         , chamadoClienteSelect: document.getElementById("chamado-cliente")
         , chamadoDescricaoInput: document.getElementById("chamado-descricao")
@@ -149,6 +152,59 @@ window.addEventListener("DOMContentLoaded", function () {
     if (!elementos.lista || !elementos.detalhe || !elementos.reciboButton || !elementos.reciboPreview) {
         return;
     }
+
+    const ITENS_POR_PAGINA = 5;
+    let clientePaginaAtual = 1;
+    let leadPaginaAtual = 1;
+    let chamadoPaginaAtual = 1;
+
+    const obterModuloPaginacao = function () {
+        if (typeof window !== "undefined" && window.GestaoPaginacao) {
+            return window.GestaoPaginacao;
+        }
+        return {
+            ITENS_POR_PAGINA_PADRAO: ITENS_POR_PAGINA,
+            calcularTotalPaginas: function (total, porPagina) {
+                const p = Number(porPagina) > 0 ? Number(porPagina) : ITENS_POR_PAGINA;
+                return Math.ceil((Number(total) || 0) / p) || 1;
+            },
+            ajustarPagina: function (atual, total) {
+                const t = Number(total) > 0 ? Number(total) : 1;
+                const a = Number(atual) || 1;
+                if (a < 1) return 1;
+                if (a > t) return t;
+                return a;
+            },
+            obterItensPagina: function (itens, atual, porPagina) {
+                if (!Array.isArray(itens)) return [];
+                const p = Number(porPagina) > 0 ? Number(porPagina) : ITENS_POR_PAGINA;
+                const total = Math.ceil(itens.length / p) || 1;
+                let a = Number(atual) || 1;
+                if (a < 1) a = 1;
+                if (a > total) a = total;
+                const inicio = (a - 1) * p;
+                return itens.slice(inicio, inicio + p);
+            },
+            renderizarControles: function () {}
+        };
+    };
+
+    const obterOuCriarContainerPaginacao = function (chaveElemento, idElemento, listaElemento, rotuloAria) {
+        if (elementos[chaveElemento]) {
+            return elementos[chaveElemento];
+        }
+        let container = document.getElementById(idElemento);
+        if (!container && listaElemento && listaElemento.parentNode) {
+            container = document.createElement("nav");
+            container.id = idElemento;
+            container.className = "lista-paginacao";
+            container.setAttribute("aria-label", rotuloAria);
+            container.hidden = true;
+            listaElemento.insertAdjacentElement("afterend", container);
+        }
+        elementos[chaveElemento] = container;
+        return container;
+    };
 
     let clienteSelecionado = null;
     let clienteEmEdicaoId = null;
@@ -567,6 +623,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
         input.addEventListener("input", function () {
             leadBuscaTexto = normalizarTextoBusca(input.value);
+            leadPaginaAtual = 1;
             renderLeads();
         });
 
@@ -599,6 +656,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
         input.addEventListener("input", function () {
             clienteBuscaTexto = normalizarTextoBusca(input.value);
+            clientePaginaAtual = 1;
             renderLista();
         });
 
@@ -1412,21 +1470,45 @@ window.addEventListener("DOMContentLoaded", function () {
             })
             : leads.slice();
 
+        const paginacao = obterModuloPaginacao();
+        const containerPaginacao = obterOuCriarContainerPaginacao(
+            "leadsPaginacao",
+            "leads-paginacao",
+            elementos.leadsLista,
+            "Paginação de leads"
+        );
+
         elementos.leadsLista.innerHTML = "";
 
         if (leads.length === 0) {
             elementos.leadsLista.innerHTML = "<li class=\"lead-item\"><p>Nenhum lead cadastrado ainda.</p></li>";
             atualizarResumoLeads();
+            paginacao.renderizarControles(containerPaginacao, {
+                totalItens: 0,
+                paginaAtual: 1,
+                itensPorPagina: ITENS_POR_PAGINA
+            });
             return;
         }
 
         if (leadsVisiveis.length === 0) {
             elementos.leadsLista.innerHTML = "<li class=\"lead-item\"><p>Nenhum lead encontrado para a busca.</p></li>";
             atualizarResumoLeads();
+            paginacao.renderizarControles(containerPaginacao, {
+                totalItens: 0,
+                paginaAtual: 1,
+                itensPorPagina: ITENS_POR_PAGINA
+            });
             return;
         }
 
-        leadsVisiveis.forEach(function (lead) {
+        const totalItens = leadsVisiveis.length;
+        const totalPaginas = paginacao.calcularTotalPaginas(totalItens, ITENS_POR_PAGINA);
+        leadPaginaAtual = paginacao.ajustarPagina(leadPaginaAtual, totalPaginas);
+
+        const itensPagina = paginacao.obterItensPagina(leadsVisiveis, leadPaginaAtual, ITENS_POR_PAGINA);
+
+        itensPagina.forEach(function (lead) {
             const item = document.createElement("li");
             item.className = "lead-item" + (leadSelecionado && leadSelecionado.id === lead.id ? " active" : "");
             item.dataset.id = lead.id;
@@ -1460,6 +1542,15 @@ window.addEventListener("DOMContentLoaded", function () {
         });
 
         atualizarResumoLeads();
+        paginacao.renderizarControles(containerPaginacao, {
+            totalItens: totalItens,
+            paginaAtual: leadPaginaAtual,
+            itensPorPagina: ITENS_POR_PAGINA,
+            onMudarPagina: function (novaPagina) {
+                leadPaginaAtual = novaPagina;
+                renderLeads();
+            }
+        });
     };
 
     const carregarLeadsBackend = async function () {
@@ -1482,14 +1573,33 @@ window.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
+        const paginacao = obterModuloPaginacao();
+        const containerPaginacao = obterOuCriarContainerPaginacao(
+            "chamadosPaginacao",
+            "chamados-paginacao",
+            elementos.chamadosLista,
+            "Paginação de chamados"
+        );
+
         elementos.chamadosLista.innerHTML = "";
 
         if (chamados.length === 0) {
             elementos.chamadosLista.innerHTML = "<li class=\"chamado-item\"><p>Nenhum chamado aberto ainda.</p></li>";
+            paginacao.renderizarControles(containerPaginacao, {
+                totalItens: 0,
+                paginaAtual: 1,
+                itensPorPagina: ITENS_POR_PAGINA
+            });
             return;
         }
 
-        chamados.forEach(function (chamado) {
+        const totalItens = chamados.length;
+        const totalPaginas = paginacao.calcularTotalPaginas(totalItens, ITENS_POR_PAGINA);
+        chamadoPaginaAtual = paginacao.ajustarPagina(chamadoPaginaAtual, totalPaginas);
+
+        const itensPagina = paginacao.obterItensPagina(chamados, chamadoPaginaAtual, ITENS_POR_PAGINA);
+
+        itensPagina.forEach(function (chamado) {
             const item = document.createElement("li");
             item.className = "chamado-item";
 
@@ -1531,6 +1641,16 @@ window.addEventListener("DOMContentLoaded", function () {
 
             elementos.chamadosLista.appendChild(item);
         });
+
+        paginacao.renderizarControles(containerPaginacao, {
+            totalItens: totalItens,
+            paginaAtual: chamadoPaginaAtual,
+            itensPorPagina: ITENS_POR_PAGINA,
+            onMudarPagina: function (novaPagina) {
+                chamadoPaginaAtual = novaPagina;
+                renderChamados();
+            }
+        });
     };
 
     const salvarChamado = async function () {
@@ -1565,6 +1685,7 @@ window.addEventListener("DOMContentLoaded", function () {
             throw new Error(mensagemErro);
         }
 
+        chamadoPaginaAtual = 1;
         await carregarChamadosBackend();
         renderChamados();
         atualizarContadorChamadosAbertos();
@@ -1724,7 +1845,10 @@ window.addEventListener("DOMContentLoaded", function () {
         leadEmEdicaoId = null;
         atualizarModoLead();
 
-        renderLeads();
+        if (!editando) {
+            leadPaginaAtual = 1;
+        }
+
         renderLeads();
         setLeadFeedback(editando ? "Lead atualizado com sucesso." : "Lead salvo com sucesso.", false);
 
@@ -1774,13 +1898,31 @@ window.addEventListener("DOMContentLoaded", function () {
             })
             : clientes.slice();
 
+        const paginacao = obterModuloPaginacao();
+        const containerPaginacao = obterOuCriarContainerPaginacao(
+            "clientesPaginacao",
+            "clientes-paginacao",
+            elementos.lista,
+            "Paginação de clientes"
+        );
+
         if (clientes.length === 0) {
             elementos.lista.innerHTML = "<li class=\"cliente-item\"><p>Nenhum cliente cadastrado ainda.</p></li>";
+            paginacao.renderizarControles(containerPaginacao, {
+                totalItens: 0,
+                paginaAtual: 1,
+                itensPorPagina: ITENS_POR_PAGINA
+            });
             return;
         }
 
         if (clientesVisiveis.length === 0) {
             elementos.lista.innerHTML = "<li class=\"cliente-item\"><p>Nenhum cliente encontrado para a busca.</p></li>";
+            paginacao.renderizarControles(containerPaginacao, {
+                totalItens: 0,
+                paginaAtual: 1,
+                itensPorPagina: ITENS_POR_PAGINA
+            });
             return;
         }
 
@@ -1792,7 +1934,13 @@ window.addEventListener("DOMContentLoaded", function () {
             return a.nome.localeCompare(b.nome, "pt-BR");
         });
 
-        clientesOrdenados.forEach(function (cliente) {
+        const totalItens = clientesOrdenados.length;
+        const totalPaginas = paginacao.calcularTotalPaginas(totalItens, ITENS_POR_PAGINA);
+        clientePaginaAtual = paginacao.ajustarPagina(clientePaginaAtual, totalPaginas);
+
+        const itensPagina = paginacao.obterItensPagina(clientesOrdenados, clientePaginaAtual, ITENS_POR_PAGINA);
+
+        itensPagina.forEach(function (cliente) {
             const diasRestantes = diasParaVencerDominio(cliente.dataVencimentoDominio);
             const proximoDeVencer = diasRestantes !== null && diasRestantes >= 0 && diasRestantes <= 10;
             const seloAlerta = proximoDeVencer
@@ -1800,7 +1948,7 @@ window.addEventListener("DOMContentLoaded", function () {
                 : "";
 
             const item = document.createElement("li");
-            item.className = "cliente-item";
+            item.className = "cliente-item" + (clienteSelecionado && clienteSelecionado.id === cliente.id ? " active" : "");
             item.classList.toggle("inativo", !cliente.ativo);
             item.dataset.id = cliente.id;
             item.innerHTML = ""
@@ -1840,6 +1988,16 @@ window.addEventListener("DOMContentLoaded", function () {
             });
 
             elementos.lista.appendChild(item);
+        });
+
+        paginacao.renderizarControles(containerPaginacao, {
+            totalItens: totalItens,
+            paginaAtual: clientePaginaAtual,
+            itensPorPagina: ITENS_POR_PAGINA,
+            onMudarPagina: function (novaPagina) {
+                clientePaginaAtual = novaPagina;
+                renderLista();
+            }
         });
     };
 
@@ -2112,6 +2270,9 @@ window.addEventListener("DOMContentLoaded", function () {
         popularSelectVendedoresCliente();
 
         renderAlertasDominio();
+        if (!editando) {
+            clientePaginaAtual = 1;
+        }
         renderLista();
         setCadastroFeedback(mensagemCadastro, exclusaoLeadFalhou);
         ativarAba("tab-cadastro");
