@@ -40,12 +40,15 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          if printf '%s' "$VPS_SSH_KEY" | grep -Eq "BEGIN .*PRIVATE KEY"; then
-            printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
-          else
-            printf '%s' "$VPS_SSH_KEY" | base64 --decode > ~/.ssh/deploy_key 2>/dev/null || printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
-          fi
+          # Salva a chave: substitui \n literais por newlines reais
+          # (caso o secret tenha sido colado em uma única linha com \n escapados)
+          echo "$VPS_SSH_KEY" | sed 's/\\n/\n/g' > ~/.ssh/deploy_key
+          # Garante newline no final do arquivo
+          echo >> ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          # Diagnóstico: mostra header/footer da chave sem expor o conteúdo
+          head -1 ~/.ssh/deploy_key
+          tail -1 ~/.ssh/deploy_key
           ssh-keyscan -p "${VPS_PORT:-22}" "$VPS_HOST" >> ~/.ssh/known_hosts
 
       - name: Enviar JAR para o servidor
