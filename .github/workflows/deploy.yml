@@ -33,22 +33,31 @@ jobs:
           done
 
       - name: Preparar SSH
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          ssh-keyscan -p "${{ secrets.VPS_PORT }}" \
-            "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+          if printf '%s' "$VPS_SSH_KEY" | grep -Eq "BEGIN .*PRIVATE KEY"; then
+            printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          else
+            printf '%s' "$VPS_SSH_KEY" | base64 --decode > ~/.ssh/deploy_key 2>/dev/null || printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          fi
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${VPS_PORT:-22}" "$VPS_HOST" >> ~/.ssh/known_hosts
 
       - name: Enviar JAR para o servidor
         run: |
           scp -P "${{ secrets.VPS_PORT }}" \
-            -i <(printf '%s\n' "${{ secrets.VPS_SSH_KEY }}") \
+            -i ~/.ssh/deploy_key \
             target/gestao-0.0.1-SNAPSHOT.jar \
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/lib/gestao-deploy/gestao.jar"
 
       - name: Reiniciar aplicação
         run: |
           ssh -p "${{ secrets.VPS_PORT }}" \
-            -i <(printf '%s\n' "${{ secrets.VPS_SSH_KEY }}") \
+            -i ~/.ssh/deploy_key \
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
             "sudo -n /usr/local/sbin/deploy-gestao"
