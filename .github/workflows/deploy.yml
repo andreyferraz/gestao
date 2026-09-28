@@ -1,0 +1,47 @@
+name: Deploy Gestao
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Compilar projeto
+        run: |
+          chmod +x ./mvnw
+          ./mvnw -B clean package
+
+      - name: Preparar SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          ssh-keyscan -p "${{ secrets.VPS_PORT }}" \
+            "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Enviar JAR para o servidor
+        run: |
+          scp -P "${{ secrets.VPS_PORT }}" \
+            -i <(printf '%s\n' "${{ secrets.VPS_SSH_KEY }}") \
+            target/gestao-0.0.1-SNAPSHOT.jar \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/lib/gestao-deploy/gestao.jar"
+
+      - name: Reiniciar aplicação
+        run: |
+          ssh -p "${{ secrets.VPS_PORT }}" \
+            -i <(printf '%s\n' "${{ secrets.VPS_SSH_KEY }}") \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+            "sudo -n /usr/local/sbin/deploy-gestao"
