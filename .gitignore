@@ -33,9 +33,9 @@ build/
 ### VS Code ###
 .vscode/
 
-### Properties (podem conter dados sensíveis) ###
-src/main/resources/application.properties
-src/main/resources/application-*.properties
+### Properties locais/secretas opcionais ###
+src/main/resources/application-local.properties
+src/main/resources/application-secret.properties
 
 ### Banco local ###
 gestao.db

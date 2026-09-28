@@ -19,6 +19,7 @@ import org.springframework.test.context.ActiveProfiles;
                 "spring.datasource.driver-class-name=org.h2.Driver",
                 "spring.sql.init.mode=always",
                 "server.servlet.context-path=/gestao",
+                "server.forward-headers-strategy=framework",
                 "app.bootstrap.admin.password=senha-de-teste"
         })
 @ActiveProfiles("prod")
