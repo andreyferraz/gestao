@@ -29,6 +29,12 @@ public class GlobalExceptionHandler {
 		return buildError(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
 	}
 
+	@ExceptionHandler(FileUploadException.class)
+	public ResponseEntity<ApiError> handleFileUploadException(FileUploadException ex, HttpServletRequest request) {
+		log.error("Erro no upload de arquivo: {}", ex.getMessage(), ex);
+		return buildError(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request.getRequestURI());
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ApiError> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex,
 			HttpServletRequest request) {
