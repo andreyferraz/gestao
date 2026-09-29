@@ -807,6 +807,13 @@ window.addEventListener("DOMContentLoaded", function () {
         }
     };
 
+    const atualizarEstiloSeletorNivel = function () {
+        if (!elementos.leadNivelSelect) {
+            return;
+        }
+        elementos.leadNivelSelect.dataset.nivel = elementos.leadNivelSelect.value || "";
+    };
+
     const preencherFormularioComLead = function (lead) {
         if (!lead || !elementos.leadNomeInput || !elementos.leadTelefoneInput || !elementos.leadOrcDevInput || !elementos.leadOrcManutencaoInput) {
             return;
@@ -818,6 +825,7 @@ window.addEventListener("DOMContentLoaded", function () {
         elementos.leadOrcManutencaoInput.value = String(Number(lead.orcamentoManutencaoHospedagem) || 0);
         if (elementos.leadNivelSelect) {
             elementos.leadNivelSelect.value = lead.nivelFechamento || "";
+            atualizarEstiloSeletorNivel();
         }
         if (elementos.leadObsInput) {
             elementos.leadObsInput.value = lead.observacoes || "";
@@ -975,6 +983,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
         if (elementos.leadForm) {
             elementos.leadForm.reset();
+            atualizarEstiloSeletorNivel();
         }
         setLeadFeedback("Lead excluido com sucesso.", false);
         await carregarResumoBackend();
@@ -2015,6 +2024,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
         if (elementos.leadForm) {
             elementos.leadForm.reset();
+            atualizarEstiloSeletorNivel();
         }
         await carregarResumoBackend();
     };
@@ -2035,6 +2045,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
         if (elementos.leadForm) {
             elementos.leadForm.reset();
+            atualizarEstiloSeletorNivel();
         }
         setLeadFeedback("Lead excluido com sucesso.", false);
         await carregarResumoBackend();
@@ -2550,6 +2561,10 @@ window.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    if (elementos.leadNivelSelect) {
+        elementos.leadNivelSelect.addEventListener("change", atualizarEstiloSeletorNivel);
+    }
+
     if (elementos.leadEditarButton) {
         elementos.leadEditarButton.addEventListener("click", function () {
             if (!leadSelecionado) {
@@ -2699,6 +2714,7 @@ window.addEventListener("DOMContentLoaded", function () {
         atualizarModoCadastro();
         atualizarModoVendedor();
         atualizarModoLead();
+        atualizarEstiloSeletorNivel();
         atualizarContadorChamadosAbertos();
         definirModoRelatorio("mensal");
         try {
