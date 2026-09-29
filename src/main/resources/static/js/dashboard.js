@@ -119,17 +119,19 @@ window.addEventListener("DOMContentLoaded", function () {
         leadTelefoneInput: document.getElementById("lead-telefone"),
         leadOrcDevInput: document.getElementById("lead-orcamento-dev"),
         leadOrcManutencaoInput: document.getElementById("lead-orcamento-manutencao"),
+        leadNivelSelect: document.getElementById("lead-nivel"),
         leadObsInput: document.getElementById("lead-observacoes"),
         leadSalvarButton: document.getElementById("lead-salvar"),
         leadTotalManutencao: document.getElementById("lead-total-manutencao"),
         leadsLista: document.getElementById("leads-lista"),
         leadFeedback: document.getElementById("lead-feedback"),
         leadModo: document.getElementById("lead-modo"),
+        leadGuiaContainer: document.getElementById("lead-guia-container"),
         leadDetalhe: null,
         leadEditarButton: null,
         leadExcluirButton: null,
-        leadBuscaContainer: null,
-        leadBuscaInput: null,
+        leadBuscaContainer: document.getElementById("lead-busca-container"),
+        leadBuscaInput: document.getElementById("lead-busca"),
         clienteBuscaContainer: null,
         clienteBuscaInput: null,
         clientesPaginacao: document.getElementById("clientes-paginacao"),
@@ -213,11 +215,62 @@ window.addEventListener("DOMContentLoaded", function () {
     let leadSelecionado = null;
     let leadEmEdicaoId = null;
     let leadBuscaTexto = "";
+    let leadFiltroNivel = null;
     let clienteBuscaTexto = "";
     let vendedorSelecionado = null;
     let vendedorEmEdicaoId = null;
     let chamadoEmEdicao = null;
     let resumoPainel = null;
+
+    const NIVEIS_FECHAMENTO = {
+        MUITO_DISTANTE: {
+            chave: "MUITO_DISTANTE",
+            classe: "lead-nivel-muito-distante",
+            badgeClasse: "lead-badge-muito-distante",
+            corClasse: "lead-cor-muito-distante",
+            label: "Muito distante",
+            cor: "#ef4444"
+        },
+        POUCO_PROVAVEL: {
+            chave: "POUCO_PROVAVEL",
+            classe: "lead-nivel-pouco-provavel",
+            badgeClasse: "lead-badge-pouco-provavel",
+            corClasse: "lead-cor-pouco-provavel",
+            label: "Pouco provável",
+            cor: "#f97316"
+        },
+        EM_NEGOCIACAO: {
+            chave: "EM_NEGOCIACAO",
+            classe: "lead-nivel-em-negociacao",
+            badgeClasse: "lead-badge-em-negociacao",
+            corClasse: "lead-cor-em-negociacao",
+            label: "Em negociação",
+            cor: "#eab308"
+        },
+        MUITO_PROVAVEL: {
+            chave: "MUITO_PROVAVEL",
+            classe: "lead-nivel-muito-provavel",
+            badgeClasse: "lead-badge-muito-provavel",
+            corClasse: "lead-cor-muito-provavel",
+            label: "Muito provável",
+            cor: "#3b82f6"
+        },
+        CERTEZA_100: {
+            chave: "CERTEZA_100",
+            classe: "lead-nivel-certeza-100",
+            badgeClasse: "lead-badge-certeza-100",
+            corClasse: "lead-cor-certeza-100",
+            label: "100% de certeza",
+            cor: "#22c55e"
+        }
+    };
+
+    const obterConfigNivelLead = function (nivel) {
+        if (!nivel) {
+            return null;
+        }
+        return NIVEIS_FECHAMENTO[nivel] || null;
+    };
 
     const nomesMeses = [
         "Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho",
@@ -374,7 +427,8 @@ window.addEventListener("DOMContentLoaded", function () {
             telefone: lead.telefone || "Nao informado",
             observacoes: lead.observacoes || "",
             orcamentoDesenvolvimento: Number(lead.orcamentoDesenvolvimento) || 0,
-            orcamentoManutencaoHospedagem: Number(lead.orcamentoManutencaoHospedagem) || 0
+            orcamentoManutencaoHospedagem: Number(lead.orcamentoManutencaoHospedagem) || 0,
+            nivelFechamento: lead.nivelFechamento || ""
         };
     };
 
@@ -604,10 +658,69 @@ window.addEventListener("DOMContentLoaded", function () {
             .trim();
     };
 
+    const configurarGuiaLeads = function () {
+        let container = elementos.leadGuiaContainer || document.getElementById("lead-guia-container");
+        if (!container && elementos.leadForm) {
+            container = document.createElement("div");
+            container.id = "lead-guia-container";
+            container.className = "lead-guia-container";
+            container.setAttribute("aria-label", "Guia de probabilidade de fechamento");
+            container.innerHTML = ""
+                + "<div class=\"lead-guia-header\"><span class=\"lead-guia-titulo\">Probabilidade de fechamento:</span></div>"
+                + "<div class=\"lead-guia-itens\">"
+                + Object.values(NIVEIS_FECHAMENTO).map(function (n) {
+                    return "<button type=\"button\" class=\"lead-guia-item\" data-nivel=\"" + n.chave + "\" title=\"Filtrar por " + n.label + "\">"
+                        + "<span class=\"lead-cor-quadrado " + n.corClasse + "\" aria-hidden=\"true\"></span>"
+                        + "<span class=\"lead-guia-label\">" + n.label + "</span>"
+                        + "</button>";
+                }).join("")
+                + "</div>";
+            elementos.leadForm.insertAdjacentElement("afterend", container);
+            elementos.leadGuiaContainer = container;
+        }
+
+        if (!container) return;
+
+        const botoes = container.querySelectorAll(".lead-guia-item");
+        botoes.forEach(function (btn) {
+            if (btn.dataset.bound === "true") return;
+            btn.dataset.bound = "true";
+            btn.addEventListener("click", function () {
+                const nivel = btn.dataset.nivel;
+                if (leadFiltroNivel === nivel) {
+                    leadFiltroNivel = null;
+                    botoes.forEach(function (b) { b.classList.remove("active"); });
+                } else {
+                    leadFiltroNivel = nivel;
+                    botoes.forEach(function (b) { b.classList.remove("active"); });
+                    btn.classList.add("active");
+                }
+                leadPaginaAtual = 1;
+                renderLeads();
+            });
+        });
+    };
+
     const criarBuscaLeads = function () {
-        if (!elementos.leadForm || !elementos.leadsLista || elementos.leadBuscaContainer) {
+        if (!elementos.leadForm || !elementos.leadsLista) {
             return;
         }
+
+        configurarGuiaLeads();
+
+        if (elementos.leadBuscaInput) {
+            if (elementos.leadBuscaInput.dataset.bound !== "true") {
+                elementos.leadBuscaInput.dataset.bound = "true";
+                elementos.leadBuscaInput.addEventListener("input", function () {
+                    leadBuscaTexto = normalizarTextoBusca(elementos.leadBuscaInput.value);
+                    leadPaginaAtual = 1;
+                    renderLeads();
+                });
+            }
+            return;
+        }
+
+        const guiaOuForm = elementos.leadGuiaContainer || elementos.leadForm;
 
         const container = document.createElement("div");
         container.id = "lead-busca-container";
@@ -623,6 +736,7 @@ window.addEventListener("DOMContentLoaded", function () {
         input.placeholder = "Pesquise por nome, telefone ou observacoes";
         input.autocomplete = "off";
 
+        input.dataset.bound = "true";
         input.addEventListener("input", function () {
             leadBuscaTexto = normalizarTextoBusca(input.value);
             leadPaginaAtual = 1;
@@ -632,7 +746,7 @@ window.addEventListener("DOMContentLoaded", function () {
         container.appendChild(label);
         container.appendChild(input);
 
-        elementos.leadForm.insertAdjacentElement("afterend", container);
+        guiaOuForm.insertAdjacentElement("afterend", container);
         elementos.leadBuscaContainer = container;
         elementos.leadBuscaInput = input;
     };
@@ -702,6 +816,9 @@ window.addEventListener("DOMContentLoaded", function () {
         elementos.leadTelefoneInput.value = lead.telefone || "";
         elementos.leadOrcDevInput.value = String(Number(lead.orcamentoDesenvolvimento) || 0);
         elementos.leadOrcManutencaoInput.value = String(Number(lead.orcamentoManutencaoHospedagem) || 0);
+        if (elementos.leadNivelSelect) {
+            elementos.leadNivelSelect.value = lead.nivelFechamento || "";
+        }
         if (elementos.leadObsInput) {
             elementos.leadObsInput.value = lead.observacoes || "";
         }
@@ -736,10 +853,16 @@ window.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
+        const configNivel = obterConfigNivelLead(lead.nivelFechamento);
+        const nivelHtml = configNivel
+            ? "<span class=\"lead-nivel-badge " + configNivel.badgeClasse + "\"><span class=\"lead-cor-quadrado " + configNivel.corClasse + "\" aria-hidden=\"true\"></span> " + configNivel.label + "</span>"
+            : "<span class=\"obs\">Nao definido</span>";
+
         target.classList.remove("empty");
         target.innerHTML = ""
             + "<dl>"
             + "<dt>Nome</dt><dd>" + lead.nome + "</dd>"
+            + "<dt>Nivel</dt><dd>" + nivelHtml + "</dd>"
             + "<dt>Telefone</dt><dd>" + lead.telefone + "</dd>"
             + "<dt>Desenvolvimento</dt><dd>" + formatarMoeda(lead.orcamentoDesenvolvimento) + "</dd>"
             + "<dt>Manutencao/Hospedagem</dt><dd>" + formatarMoeda(lead.orcamentoManutencaoHospedagem) + "</dd>"
@@ -1461,20 +1584,30 @@ window.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
+        let leadsFiltrados = leads;
+        if (leadFiltroNivel) {
+            leadsFiltrados = leadsFiltrados.filter(function (lead) {
+                return lead.nivelFechamento === leadFiltroNivel;
+            });
+        }
+
         const termosBusca = normalizarTextoBusca(leadBuscaTexto);
         const leadsVisiveis = termosBusca
-            ? leads.filter(function (lead) {
+            ? leadsFiltrados.filter(function (lead) {
+                const configNivel = obterConfigNivelLead(lead.nivelFechamento);
+                const nivelLabel = configNivel ? configNivel.label : "";
                 const camposBusca = [
                     lead.nome,
                     lead.telefone,
                     lead.observacoes,
+                    nivelLabel,
                     formatarMoeda(lead.orcamentoDesenvolvimento),
                     formatarMoeda(lead.orcamentoManutencaoHospedagem)
                 ].join(" ");
 
                 return normalizarTextoBusca(camposBusca).includes(termosBusca);
             })
-            : leads.slice();
+            : leadsFiltrados.slice();
 
         const paginacao = obterModuloPaginacao();
         const containerPaginacao = obterOuCriarContainerPaginacao(
@@ -1515,11 +1648,31 @@ window.addEventListener("DOMContentLoaded", function () {
         const itensPagina = paginacao.obterItensPagina(leadsVisiveis, leadPaginaAtual, ITENS_POR_PAGINA);
 
         itensPagina.forEach(function (lead) {
+            const configNivel = obterConfigNivelLead(lead.nivelFechamento);
             const item = document.createElement("li");
-            item.className = "lead-item" + (leadSelecionado && leadSelecionado.id === lead.id ? " active" : "");
+            let itemClass = "lead-item" + (leadSelecionado && leadSelecionado.id === lead.id ? " active" : "");
+            if (configNivel) {
+                itemClass += " " + configNivel.classe;
+            }
+            item.className = itemClass;
             item.dataset.id = lead.id;
+
+            let headerHtml = "";
+            if (configNivel) {
+                headerHtml = ""
+                    + "<div class=\"lead-item-header\">"
+                    + "<h4>" + lead.nome + "</h4>"
+                    + "<span class=\"lead-nivel-badge " + configNivel.badgeClasse + "\">"
+                    + "<span class=\"lead-cor-quadrado " + configNivel.corClasse + "\" aria-hidden=\"true\"></span> "
+                    + configNivel.label
+                    + "</span>"
+                    + "</div>";
+            } else {
+                headerHtml = "<h4>" + lead.nome + "</h4>";
+            }
+
             item.innerHTML = ""
-                + "<h4>" + lead.nome + "</h4>"
+                + headerHtml
                 + "<p><strong>Telefone:</strong> " + lead.telefone + "</p>"
                 + "<p><strong>Desenvolvimento:</strong> " + formatarMoeda(lead.orcamentoDesenvolvimento)
                 + " | <strong>Manutencao/Hospedagem:</strong> " + formatarMoeda(lead.orcamentoManutencaoHospedagem) + "</p>";
@@ -1796,6 +1949,7 @@ window.addEventListener("DOMContentLoaded", function () {
         const orcDesenvolvimento = Number(elementos.leadOrcDevInput.value);
         const orcManutencao = Number(elementos.leadOrcManutencaoInput.value);
         const observacoes = elementos.leadObsInput ? elementos.leadObsInput.value.trim() : "";
+        const nivelFechamento = elementos.leadNivelSelect ? elementos.leadNivelSelect.value : "";
 
         if (!nome || !telefone || Number.isNaN(orcDesenvolvimento) || Number.isNaN(orcManutencao)) {
             throw new Error("Preencha os campos obrigatorios do lead.");
@@ -1806,7 +1960,8 @@ window.addEventListener("DOMContentLoaded", function () {
             telefone: telefone,
             observacoes: observacoes,
             orcamentoDesenvolvimento: orcDesenvolvimento,
-            orcamentoManutencaoHospedagem: orcManutencao
+            orcamentoManutencaoHospedagem: orcManutencao,
+            nivelFechamento: nivelFechamento || null
         };
 
         const editando = Boolean(leadEmEdicaoId);

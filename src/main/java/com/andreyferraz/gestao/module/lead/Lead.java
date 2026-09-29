@@ -32,6 +32,9 @@ public class Lead {
 
 	private String observacoes;
 
+	@Column("nivel_fechamento")
+	private String nivelFechamento;
+
 	@Column("created_at")
 	private String createdAt;
 

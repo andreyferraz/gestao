@@ -30,6 +30,7 @@ public class LeadService {
 				lead.getOrcamentoDesenvolvimento() != null ? lead.getOrcamentoDesenvolvimento() : BigDecimal.ZERO,
 				lead.getOrcamentoManutencaoHospedagem() != null ? lead.getOrcamentoManutencaoHospedagem() : BigDecimal.ZERO,
 				lead.getObservacoes(),
+				lead.getNivelFechamento(),
 				lead.getCreatedAt());
 
 		return buscarPorId(lead.getId());
@@ -54,7 +55,8 @@ public class LeadService {
 				leadAtualizado.getTelefone(),
 				leadAtualizado.getOrcamentoDesenvolvimento(),
 				leadAtualizado.getOrcamentoManutencaoHospedagem(),
-				leadAtualizado.getObservacoes());
+				leadAtualizado.getObservacoes(),
+				leadAtualizado.getNivelFechamento());
 
 		return buscarPorId(id);
 	}

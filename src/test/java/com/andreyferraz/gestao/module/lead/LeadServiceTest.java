@@ -31,8 +31,8 @@ class LeadServiceTest {
 
 	@Test
 	void listarTodos_deveUsarOrdenacaoPorAtualizacaoRecente() {
-		var primeiro = new Lead(UUID.randomUUID(), "Lead 1", "1111", BigDecimal.ONE, BigDecimal.TEN, "obs 1", "2026-07-14T10:00:00Z", "2026-07-14 10:00:00.000");
-		var segundo = new Lead(UUID.randomUUID(), "Lead 2", "2222", BigDecimal.TEN, BigDecimal.ONE, "obs 2", "2026-07-14T11:00:00Z", "2026-07-14 11:00:00.000");
+		var primeiro = new Lead(UUID.randomUUID(), "Lead 1", "1111", BigDecimal.ONE, BigDecimal.TEN, "obs 1", "MUITO_DISTANTE", "2026-07-14T10:00:00Z", "2026-07-14 10:00:00.000");
+		var segundo = new Lead(UUID.randomUUID(), "Lead 2", "2222", BigDecimal.TEN, BigDecimal.ONE, "obs 2", "CERTEZA_100", "2026-07-14T11:00:00Z", "2026-07-14 11:00:00.000");
 		when(leadRepository.findAllOrderByAtualizacaoRecente()).thenReturn(List.of(segundo, primeiro));
 
 		var result = leadService.listarTodos();
@@ -44,16 +44,17 @@ class LeadServiceTest {
 	@Test
 	void atualizar_devePersistirMudancaERecarregarLead() {
 		UUID id = UUID.randomUUID();
-		var existente = new Lead(id, "Lead antigo", "9999", BigDecimal.ZERO, BigDecimal.ZERO, "antes", "2026-07-14T09:00:00Z", "2026-07-14 09:00:00.000");
-		var atualizado = new Lead(null, "Lead novo", "8888", BigDecimal.valueOf(50), BigDecimal.valueOf(75), "depois", null, null);
-		var persistido = new Lead(id, "Lead novo", "8888", BigDecimal.valueOf(50), BigDecimal.valueOf(75), "depois", "2026-07-14T12:00:00Z", "2026-07-14 12:00:00.000");
+		var existente = new Lead(id, "Lead antigo", "9999", BigDecimal.ZERO, BigDecimal.ZERO, "antes", "POUCO_PROVAVEL", "2026-07-14T09:00:00Z", "2026-07-14 09:00:00.000");
+		var atualizado = new Lead(null, "Lead novo", "8888", BigDecimal.valueOf(50), BigDecimal.valueOf(75), "depois", "MUITO_PROVAVEL", null, null);
+		var persistido = new Lead(id, "Lead novo", "8888", BigDecimal.valueOf(50), BigDecimal.valueOf(75), "depois", "MUITO_PROVAVEL", "2026-07-14T12:00:00Z", "2026-07-14 12:00:00.000");
 
 		when(leadRepository.findById(id)).thenReturn(Optional.of(existente)).thenReturn(Optional.of(persistido));
 
 		var result = leadService.atualizar(id, atualizado);
 
 		assertEquals("Lead novo", result.getNome());
-		verify(leadRepository).atualizar(id, "Lead novo", "8888", BigDecimal.valueOf(50), BigDecimal.valueOf(75), "depois");
+		assertEquals("MUITO_PROVAVEL", result.getNivelFechamento());
+		verify(leadRepository).atualizar(id, "Lead novo", "8888", BigDecimal.valueOf(50), BigDecimal.valueOf(75), "depois", "MUITO_PROVAVEL");
 	}
 
 	@Test
@@ -62,13 +63,13 @@ class LeadServiceTest {
 		String createdAtOriginal = "2026-07-14T09:00:00Z";
 		var existente = new Lead(
 				id, "Lead antigo", "9999", BigDecimal.ZERO, BigDecimal.ZERO,
-				"antes", createdAtOriginal, "2026-07-14 09:00:00.000");
+				"antes", "MUITO_DISTANTE", createdAtOriginal, "2026-07-14 09:00:00.000");
 		var atualizado = new Lead(
 				null, "Lead atualizado", "8888", BigDecimal.valueOf(50), BigDecimal.valueOf(75),
-				"depois", "2099-01-01T00:00:00Z", null);
+				"depois", "CERTEZA_100", "2099-01-01T00:00:00Z", null);
 		var persistido = new Lead(
 				id, "Lead atualizado", "8888", BigDecimal.valueOf(50), BigDecimal.valueOf(75),
-				"depois", createdAtOriginal, "2026-07-14 12:00:00.000");
+				"depois", "CERTEZA_100", createdAtOriginal, "2026-07-14 12:00:00.000");
 
 		when(leadRepository.findById(id)).thenReturn(Optional.of(existente)).thenReturn(Optional.of(persistido));
 
@@ -76,14 +77,14 @@ class LeadServiceTest {
 
 		assertEquals(createdAtOriginal, result.getCreatedAt());
 		verify(leadRepository).atualizar(
-				id, "Lead atualizado", "8888", BigDecimal.valueOf(50), BigDecimal.valueOf(75), "depois");
+				id, "Lead atualizado", "8888", BigDecimal.valueOf(50), BigDecimal.valueOf(75), "depois", "CERTEZA_100");
 	}
 
 	@Test
 	void criar_deveDefinirDataOriginalEmUtc() {
 		var input = new Lead(
 				null, "Lead", "11999999999", BigDecimal.TEN, BigDecimal.ONE,
-				"observacao", null, null);
+				"observacao", "EM_NEGOCIACAO", null, null);
 		when(leadRepository.findById(any(UUID.class))).thenAnswer(invocation -> {
 			input.setId(invocation.getArgument(0));
 			return Optional.of(input);
@@ -96,6 +97,26 @@ class LeadServiceTest {
 		verify(leadRepository).inserir(
 				eq(result.getId()), eq("Lead"), eq("11999999999"),
 				eq(BigDecimal.TEN), eq(BigDecimal.ONE), eq("observacao"),
+				eq("EM_NEGOCIACAO"),
+				eq(result.getCreatedAt()));
+	}
+
+	@Test
+	void criar_devePermitirNivelFechamentoNulo() {
+		var input = new Lead(
+				null, "Lead Sem Nivel", "11988887777", BigDecimal.ZERO, BigDecimal.ZERO,
+				"Sem nivel", null, null, null);
+		when(leadRepository.findById(any(UUID.class))).thenAnswer(invocation -> {
+			input.setId(invocation.getArgument(0));
+			return Optional.of(input);
+		});
+
+		var result = leadService.criar(input);
+
+		verify(leadRepository).inserir(
+				eq(result.getId()), eq("Lead Sem Nivel"), eq("11988887777"),
+				eq(BigDecimal.ZERO), eq(BigDecimal.ZERO), eq("Sem nivel"),
+				eq(null),
 				eq(result.getCreatedAt()));
 	}
 }

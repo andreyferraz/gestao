@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS lead (
 	orcamento_desenvolvimento NUMERIC NOT NULL DEFAULT 0,
 	orcamento_manutencao_hospedagem NUMERIC NOT NULL DEFAULT 0,
 	observacoes TEXT,
+	nivel_fechamento TEXT,
 	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

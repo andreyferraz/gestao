@@ -715,6 +715,206 @@ body.dashboard-page {
     background: #ecfeff;
 }
 
+/* Guia de probabilidade de fechamento dos leads */
+.dashboard-page .lead-guia-container {
+    margin-top: 16px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+}
+
+.dashboard-page .lead-guia-header {
+    margin-bottom: 8px;
+}
+
+.dashboard-page .lead-guia-titulo {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.dashboard-page .lead-guia-itens {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    align-items: center;
+}
+
+.dashboard-page .lead-guia-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: #f8fafc;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    transition: all 0.2s ease;
+}
+
+.dashboard-page .lead-guia-item:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.dashboard-page .lead-guia-item.active {
+    background: #e2e8f0;
+    border-color: #64748b;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Quadrado colorido */
+.dashboard-page .lead-cor-quadrado {
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+    border-radius: 3px;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.dashboard-page .lead-cor-muito-distante {
+    background-color: #ef4444;
+}
+
+.dashboard-page .lead-cor-pouco-provavel {
+    background-color: #f97316;
+}
+
+.dashboard-page .lead-cor-em-negociacao {
+    background-color: #eab308;
+}
+
+.dashboard-page .lead-cor-muito-provavel {
+    background-color: #3b82f6;
+}
+
+.dashboard-page .lead-cor-certeza-100 {
+    background-color: #22c55e;
+}
+
+/* Cabeçalho e badges do card do lead */
+.dashboard-page .lead-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.dashboard-page .lead-item-header h4 {
+    margin: 0;
+    font-size: 15px;
+    flex: 1;
+}
+
+.dashboard-page .lead-nivel-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    white-space: nowrap;
+}
+
+.dashboard-page .lead-badge-muito-distante {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #f87171;
+}
+
+.dashboard-page .lead-badge-pouco-provavel {
+    background-color: #ffedd5;
+    color: #9a3412;
+    border: 1px solid #fb923c;
+}
+
+.dashboard-page .lead-badge-em-negociacao {
+    background-color: #fef9c3;
+    color: #854d0e;
+    border: 1px solid #facc15;
+}
+
+.dashboard-page .lead-badge-muito-provavel {
+    background-color: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #60a5fa;
+}
+
+.dashboard-page .lead-badge-certeza-100 {
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #4ade80;
+}
+
+/* Cores dos cards de lead que tiverem setado o nível */
+.dashboard-page .lead-item.lead-nivel-muito-distante {
+    background-color: #fff5f5;
+    border-color: #fca5a5;
+    border-left: 6px solid #ef4444;
+}
+.dashboard-page .lead-item.lead-nivel-muito-distante:hover,
+.dashboard-page .lead-item.lead-nivel-muito-distante.active {
+    background-color: #fee2e2;
+    border-color: #ef4444;
+    border-left-color: #dc2626;
+}
+
+.dashboard-page .lead-item.lead-nivel-pouco-provavel {
+    background-color: #fffaf5;
+    border-color: #fdba74;
+    border-left: 6px solid #f97316;
+}
+.dashboard-page .lead-item.lead-nivel-pouco-provavel:hover,
+.dashboard-page .lead-item.lead-nivel-pouco-provavel.active {
+    background-color: #ffedd5;
+    border-color: #f97316;
+    border-left-color: #ea580c;
+}
+
+.dashboard-page .lead-item.lead-nivel-em-negociacao {
+    background-color: #fefee8;
+    border-color: #fde047;
+    border-left: 6px solid #eab308;
+}
+.dashboard-page .lead-item.lead-nivel-em-negociacao:hover,
+.dashboard-page .lead-item.lead-nivel-em-negociacao.active {
+    background-color: #fef9c3;
+    border-color: #eab308;
+    border-left-color: #ca8a04;
+}
+
+.dashboard-page .lead-item.lead-nivel-muito-provavel {
+    background-color: #f5f9ff;
+    border-color: #93c5fd;
+    border-left: 6px solid #3b82f6;
+}
+.dashboard-page .lead-item.lead-nivel-muito-provavel:hover,
+.dashboard-page .lead-item.lead-nivel-muito-provavel.active {
+    background-color: #dbeafe;
+    border-color: #3b82f6;
+    border-left-color: #2563eb;
+}
+
+.dashboard-page .lead-item.lead-nivel-certeza-100 {
+    background-color: #f4fbf6;
+    border-color: #86efac;
+    border-left: 6px solid #22c55e;
+}
+.dashboard-page .lead-item.lead-nivel-certeza-100:hover,
+.dashboard-page .lead-item.lead-nivel-certeza-100.active {
+    background-color: #dcfce7;
+    border-color: #22c55e;
+    border-left-color: #16a34a;
+}
+
 .dashboard-page .lead-item h4 {
     margin: 0 0 4px;
     font-size: 15px;

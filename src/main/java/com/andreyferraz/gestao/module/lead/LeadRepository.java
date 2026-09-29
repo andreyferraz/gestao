@@ -15,10 +15,10 @@ public interface LeadRepository extends CrudRepository<Lead, UUID> {
 	@Query("""
 			INSERT INTO lead (
 				id, nome, telefone, orcamento_desenvolvimento,
-				orcamento_manutencao_hospedagem, observacoes, created_at, updated_at
+				orcamento_manutencao_hospedagem, observacoes, nivel_fechamento, created_at, updated_at
 			) VALUES (
 				:id, :nome, :telefone, :orcamentoDesenvolvimento,
-				:orcamentoManutencaoHospedagem, :observacoes, :createdAt,
+				:orcamentoManutencaoHospedagem, :observacoes, :nivelFechamento, :createdAt,
 				STRFTIME('%Y-%m-%d %H:%M:%f', 'now')
 			)
 			""")
@@ -29,18 +29,20 @@ public interface LeadRepository extends CrudRepository<Lead, UUID> {
 			java.math.BigDecimal orcamentoDesenvolvimento,
 			java.math.BigDecimal orcamentoManutencaoHospedagem,
 			String observacoes,
+			String nivelFechamento,
 			String createdAt);
 
 	@Modifying
-	@Query("UPDATE lead SET nome = :nome, telefone = :telefone, orcamento_desenvolvimento = :orcamentoDesenvolvimento, orcamento_manutencao_hospedagem = :orcamentoManutencaoHospedagem, observacoes = :observacoes, updated_at = STRFTIME('%Y-%m-%d %H:%M:%f', 'now') WHERE id = :id")
+	@Query("UPDATE lead SET nome = :nome, telefone = :telefone, orcamento_desenvolvimento = :orcamentoDesenvolvimento, orcamento_manutencao_hospedagem = :orcamentoManutencaoHospedagem, observacoes = :observacoes, nivel_fechamento = :nivelFechamento, updated_at = STRFTIME('%Y-%m-%d %H:%M:%f', 'now') WHERE id = :id")
 	void atualizar(
 			UUID id,
 			String nome,
 			String telefone,
 			java.math.BigDecimal orcamentoDesenvolvimento,
 			java.math.BigDecimal orcamentoManutencaoHospedagem,
-			String observacoes);
+			String observacoes,
+			String nivelFechamento);
 
-	@Query("SELECT id, nome, telefone, orcamento_desenvolvimento, orcamento_manutencao_hospedagem, observacoes, created_at, updated_at FROM lead ORDER BY updated_at DESC, id DESC")
+	@Query("SELECT id, nome, telefone, orcamento_desenvolvimento, orcamento_manutencao_hospedagem, observacoes, nivel_fechamento, created_at, updated_at FROM lead ORDER BY updated_at DESC, id DESC")
 	List<Lead> findAllOrderByAtualizacaoRecente();
 }

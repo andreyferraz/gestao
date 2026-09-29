@@ -326,12 +326,55 @@
                     <label for="lead-orcamento-manutencao">Orçamento para Manutenção/Hospedagem (R$)</label>
                     <input id="lead-orcamento-manutencao" type="number" min="0" step="0.01" placeholder="450.00" required>
 
+                    <label for="lead-nivel">Nível de fechamento</label>
+                    <select id="lead-nivel">
+                        <option value="">Não definido</option>
+                        <option value="MUITO_DISTANTE">Muito distante</option>
+                        <option value="POUCO_PROVAVEL">Pouco provável</option>
+                        <option value="EM_NEGOCIACAO">Em negociação</option>
+                        <option value="MUITO_PROVAVEL">Muito provável</option>
+                        <option value="CERTEZA_100">100% de certeza</option>
+                    </select>
+
                     <label for="lead-observacoes">Observações</label>
                     <textarea id="lead-observacoes" rows="4" placeholder="Necessita e-commerce com integração de pagamento."></textarea>
 
                     <button id="lead-salvar" type="submit">Salvar Lead</button>
                 </form>
                 <small id="lead-modo" class="obs">Modo atual: novo lead.</small>
+
+                <div id="lead-guia-container" class="lead-guia-container" aria-label="Guia de probabilidade de fechamento">
+                    <div class="lead-guia-header">
+                        <span class="lead-guia-titulo">Probabilidade de fechamento:</span>
+                    </div>
+                    <div class="lead-guia-itens">
+                        <button type="button" class="lead-guia-item" data-nivel="MUITO_DISTANTE" title="Filtrar por Muito distante">
+                            <span class="lead-cor-quadrado lead-cor-muito-distante" aria-hidden="true"></span>
+                            <span class="lead-guia-label">Muito distante</span>
+                        </button>
+                        <button type="button" class="lead-guia-item" data-nivel="POUCO_PROVAVEL" title="Filtrar por Pouco provável">
+                            <span class="lead-cor-quadrado lead-cor-pouco-provavel" aria-hidden="true"></span>
+                            <span class="lead-guia-label">Pouco provável</span>
+                        </button>
+                        <button type="button" class="lead-guia-item" data-nivel="EM_NEGOCIACAO" title="Filtrar por Em negociação">
+                            <span class="lead-cor-quadrado lead-cor-em-negociacao" aria-hidden="true"></span>
+                            <span class="lead-guia-label">Em negociação</span>
+                        </button>
+                        <button type="button" class="lead-guia-item" data-nivel="MUITO_PROVAVEL" title="Filtrar por Muito provável">
+                            <span class="lead-cor-quadrado lead-cor-muito-provavel" aria-hidden="true"></span>
+                            <span class="lead-guia-label">Muito provável</span>
+                        </button>
+                        <button type="button" class="lead-guia-item" data-nivel="CERTEZA_100" title="Filtrar por 100% de certeza">
+                            <span class="lead-cor-quadrado lead-cor-certeza-100" aria-hidden="true"></span>
+                            <span class="lead-guia-label">100% de certeza</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="lead-busca-container" class="lead-form lead-busca-form">
+                    <label for="lead-busca">Buscar leads</label>
+                    <input id="lead-busca" type="search" placeholder="Pesquise por nome, telefone ou observacoes" autocomplete="off">
+                </div>
 
                 <ul id="leads-lista" class="leads-lista" aria-label="Lista de leads cadastrados"></ul>
                 <nav id="leads-paginacao" class="lista-paginacao" aria-label="Paginação de leads" hidden></nav>

@@ -46,6 +46,10 @@ public class LeadSchemaInitializer {
 				)
 				WHERE created_at IS NULL OR trim(created_at) = ''
 				""");
+
+		if (!hasColumn(LEAD_TABLE, "nivel_fechamento")) {
+			jdbcTemplate.execute("ALTER TABLE lead ADD COLUMN nivel_fechamento TEXT");
+		}
 	}
 
 	private boolean hasColumn(String tableName, String columnName) {
